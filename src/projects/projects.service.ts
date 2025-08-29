@@ -21,10 +21,9 @@ export class ProjectsService {
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
     try {
-      const { userId, name, description } = createProjectDto;
+      const { name, description } = createProjectDto;
 
       const newProject = this.projectsRepo.create({
-        userId,
         name,
         description,
       });

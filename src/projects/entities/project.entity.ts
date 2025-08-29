@@ -11,7 +11,7 @@ export class Project {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', default: 'DefaultUser' })
   userId: string;
 
   @Column()
