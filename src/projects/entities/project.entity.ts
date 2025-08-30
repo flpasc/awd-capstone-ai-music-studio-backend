@@ -20,9 +20,6 @@ export class Project {
   @Column()
   description: string;
 
-  @Column({ name: 'storage_path', default: 'DefaultBucket' })
-  storagePath: string;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
