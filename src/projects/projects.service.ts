@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
 
-// TODO: Proper error handling
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -30,8 +29,10 @@ export class ProjectsService {
 
       return await this.projectsRepo.save(newProject);
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Failed to create new project');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Create project error: ${errorMessage}`);
+      throw new InternalServerErrorException('Failed to create project');
     }
   }
 
@@ -39,8 +40,10 @@ export class ProjectsService {
     try {
       return await this.projectsRepo.find();
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Failed to get all projects');
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Find all projects error: ${errorMessage}`);
+      throw new InternalServerErrorException('Failed to retrieve projects');
     }
   }
 
@@ -53,13 +56,18 @@ export class ProjectsService {
       const project = await this.projectsRepo.findOneBy({ id });
 
       if (!project) {
-        throw new NotFoundException(`Project with id: ${id} does not exists`);
+        throw new NotFoundException(`Project with id: ${id} does not exist`);
       }
 
       return project;
     } catch (error) {
-      console.error(error);
-      throw new NotFoundException(`Project with id: ${id} not found`);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Find project error: ${errorMessage} - ID: ${id}`);
+      throw new InternalServerErrorException('Failed to retrieve project');
     }
   }
 
@@ -87,8 +95,17 @@ export class ProjectsService {
       await this.projectsRepo.update(id, updateProjectDto);
       return await this.findOne(id);
     } catch (error) {
-      console.error(error);
-      throw new BadRequestException(`Could not update project with id: ${id}`);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Update project error: ${errorMessage} - ID: ${id}`);
+      throw new InternalServerErrorException('Failed to update project');
     }
   }
 
@@ -99,18 +116,19 @@ export class ProjectsService {
 
     try {
       const project = await this.findOne(id);
-      const deleteResult = await this.projectsRepo.delete(id);
-
-      if (deleteResult.affected === 0) {
-        throw new NotFoundException(`Project with the id: ${id} not found`);
-      }
-
+      await this.projectsRepo.delete(id);
       return project;
     } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `Failed to delete project with id: ${id}`,
-      );
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Delete project error: ${errorMessage} - ID: ${id}`);
+      throw new InternalServerErrorException('Failed to delete project');
     }
   }
 }
