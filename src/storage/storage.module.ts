@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { MinioService } from './minio.service';
-import { MinioController } from './minio.controller';
+import { MinioService } from './storage.service';
+import { MinioController } from './storage.controller';
 
 @Module({
   controllers: [MinioController],

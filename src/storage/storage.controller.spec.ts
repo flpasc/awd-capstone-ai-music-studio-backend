@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MinioController } from './minio.controller';
-import { MinioService } from './minio.service';
+import { MinioController } from './storage.controller';
+import { MinioService } from './storage.service';
 
 describe('MinioController', () => {
   let controller: MinioController;

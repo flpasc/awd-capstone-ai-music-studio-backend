@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
-import { MinioService } from './minio.service';
+import { MinioService } from './storage.service';
 
 @Controller('storage')
 export class MinioController {

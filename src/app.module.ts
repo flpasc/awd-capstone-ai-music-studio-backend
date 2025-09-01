@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
-import { MinioModule } from './minio/minio.module';
+import { MinioModule } from './storage/storage.module';
 
 @Module({
   imports: [
