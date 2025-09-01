@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Client, BucketItem } from 'minio';
 
 @Injectable()
-export class MinioService {
+export class StorageService {
   private minioClient: Client;
 
   // TODO: Should i put the minio connection in a extra singleton class?

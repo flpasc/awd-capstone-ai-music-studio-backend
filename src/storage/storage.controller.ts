@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
-import { MinioService } from './storage.service';
+import { StorageService } from './storage.service';
 
 @Controller('storage')
-export class MinioController {
-  constructor(private readonly minioService: MinioService) {}
+export class StorageController {
+  constructor(private readonly minioService: StorageService) {}
 
   @Post('create/:bucketName')
   async createBucket(@Param('bucketName') bucketName: string) {

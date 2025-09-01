@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MinioService } from './storage.service';
-import { MinioController } from './storage.controller';
+import { StorageService } from './storage.service';
+import { StorageController } from './storage.controller';
 
 @Module({
-  controllers: [MinioController],
-  providers: [MinioService],
+  controllers: [StorageController],
+  providers: [StorageService],
 })
 export class MinioModule {}
