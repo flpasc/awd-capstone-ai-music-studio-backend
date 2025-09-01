@@ -36,6 +36,15 @@ export class StorageController {
     return this.storageService.listBuckets();
   }
 
+  @Post('delete/:bucketName/:fileName')
+  async deleteFile(
+    @Param('bucketName') bucketName: string,
+    @Param('fileName') fileName: string,
+  ) {
+    const result = await this.storageService.deleteFile(bucketName, fileName);
+    return { message: result };
+  }
+
   @Get('download/:bucketName/:filename')
   async downloadFile(
     @Param('bucketName') bucketName: string,
