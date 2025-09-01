@@ -5,31 +5,57 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Express } from 'express';
+import type { Express, Response } from 'express';
 import { StorageService } from './storage.service';
+
+// TODO: Move const somewhere else
+const FILE_MAX_UPLOAD_SIZE = 20000000; // 20mb
 
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly minioService: StorageService) {}
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('create/:bucketName')
   async createBucket(@Param('bucketName') bucketName: string) {
-    const result = await this.minioService.createBucket(bucketName);
+    const result = await this.storageService.createBucket(bucketName);
     return { message: result, bucket: bucketName };
   }
 
   @Get('list/:bucketName')
   async listFiles(@Param('bucketName') bucketName: string) {
-    return this.minioService.listFiles(bucketName);
+    return this.storageService.listFiles(bucketName);
   }
 
   @Get('list')
   async listBuckets() {
-    return this.minioService.listBuckets();
+    return this.storageService.listBuckets();
+  }
+
+  @Get('download/:bucketName/:filename')
+  async downloadFile(
+    @Param('bucketName') bucketName: string,
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const file = await this.storageService.getFile(bucketName, filename);
+      res.set({
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+      res.send(file);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Unknown download error ocurred';
+      res.status(404).json({ error: errorMessage });
+    }
   }
 
   // TODO: Allow video upload
@@ -44,7 +70,7 @@ export class StorageController {
           fileType: '.(png|img|jpeg|jpg|webp)',
         })
         .addMaxSizeValidator({
-          maxSize: 20000000, // 20mb
+          maxSize: FILE_MAX_UPLOAD_SIZE,
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -53,7 +79,7 @@ export class StorageController {
     file: Express.Multer.File,
   ) {
     const objectName = `${Date.now()}--${file.originalname}`;
-    const result = await this.minioService.uploadFile(
+    const result = await this.storageService.uploadFile(
       bucketName,
       objectName,
       file.buffer,
