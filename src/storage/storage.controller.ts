@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Express, Response } from 'express';
+import type { Response } from 'express';
 import { StorageService } from './storage.service';
 
 // TODO: Move const somewhere else
