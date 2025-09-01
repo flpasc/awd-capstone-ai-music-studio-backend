@@ -12,7 +12,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
 import { MinioService } from './minio.service';
 
-@Controller('minio')
+@Controller('storage')
 export class MinioController {
   constructor(private readonly minioService: MinioService) {}
 
