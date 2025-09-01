@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { MinioModule } from './storage/storage.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MinioModule } from './storage/storage.module';
     UsersModule,
     ProjectsModule,
     MinioModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
