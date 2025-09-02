@@ -8,3 +8,4 @@ import { AssetLink } from './entities/asset-link.entity';
   providers: [AssetLinksService],
   exports: [AssetLinksService],
 })
+export class AssetLinksModule {}
