@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-interface AssetMetadata {
+export interface AssetMetadata {
   size: number;
   duration: number;
 }

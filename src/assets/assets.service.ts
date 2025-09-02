@@ -1,11 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Asset } from './entities/asset.entity';
+import { Repository } from 'typeorm';
+
+// TODO: Remove default userId
+const DEFAULT_USER_ID = '1';
 
 @Injectable()
 export class AssetsService {
-  create(createAssetDto: CreateAssetDto) {
-    return 'This action adds a new asset';
+  constructor(
+    @InjectRepository(Asset)
+    private readonly assetsRepo: Repository<Asset>,
+  ) {}
+
+  async create(createAssetDto: CreateAssetDto): Promise<Asset> {
+    try {
+      const { name, metadata, format } = createAssetDto;
+      const newAsset = this.assetsRepo.create({
+        userId: DEFAULT_USER_ID,
+        name,
+        metadata,
+        format,
+      });
+
+      return await this.assetsRepo.save(newAsset);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : `Unknown Error creating new asset`;
+      console.error(`Create asset error: ${errorMessage}`);
+      throw new InternalServerErrorException(`Failed to create asset`);
+    }
   }
 
   findAll() {
