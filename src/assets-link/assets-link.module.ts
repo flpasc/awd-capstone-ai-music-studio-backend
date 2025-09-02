@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AssetLinksService } from './assets-link.service';
-import { AssetLink } from './entities/asset-link.entity';
+import { AssetLink } from './entities/assets-link.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([AssetLink])],
