@@ -6,6 +6,10 @@ import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
+import { AssetsModule } from './assets/assets.module';
+import { AssetsLinkService } from './assets-link/assets-link.service';
+import { AssetsLinkModule } from './assets-link/assets-link.module';
+import { AssetLinkController } from './asset-link/asset-link.controller';
 
 @Module({
   imports: [
@@ -19,8 +23,10 @@ import { TasksModule } from './tasks/tasks.module';
     ProjectsModule,
     MinioModule,
     TasksModule,
+    AssetsModule,
+    AssetsLinkModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AssetLinkController],
+  providers: [AppService, AssetsLinkService],
 })
 export class AppModule {}

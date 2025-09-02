@@ -6,9 +6,16 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-interface AssetMetadata {}
+interface AssetMetadata {
+  size: number;
+  duration: number;
+}
 
-interface AssetFormat {}
+export enum AssetFormat {
+  VIDEO = 'video',
+  AUDIO = 'audio',
+  IMAGE = 'image',
+}
 
 @Entity('asset')
 export class Asset {
