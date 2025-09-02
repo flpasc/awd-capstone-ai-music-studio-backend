@@ -5,6 +5,10 @@ import { Client, BucketItem } from 'minio';
 export class StorageService {
   private minioClient: Client;
 
+  private readonly DEFAULT_BUCKET_NAME = 'app-assets';
+  private readonly DEFAULT_PRESIGNED_URL_EXPIRE_TIME = 3600;
+
+  // TODO: Proper error handling
   // TODO: Should i put the minio connection in a extra singleton class?
   constructor() {
     this.minioClient = new Client({
@@ -16,8 +20,37 @@ export class StorageService {
     });
   }
 
-  // TODO: Proper error handling
-  // Create new bucket
+  /**
+   * Helper to generate object path: userId/projectId/filename
+   * */
+  private generateObjectPath(
+    userId: string,
+    projectId: string,
+    filename: string,
+  ): string {
+    return `${userId}/${projectId}/${filename}`;
+  }
+
+  /**
+   * Initialze default bucket if it doesnt exist
+   * */
+  async initializeDefaultBucket(): Promise<void> {
+    try {
+      const bucketExists = await this.minioClient.bucketExists(
+        this.DEFAULT_BUCKET_NAME,
+      );
+      if (!bucketExists) {
+        await this.minioClient.makeBucket(this.DEFAULT_BUCKET_NAME);
+        console.log(`Default bucket initialized: ${this.DEFAULT_BUCKET_NAME}`);
+      }
+    } catch (error) {
+      throw new Error(`Error initializing default bucket: ${error}`);
+    }
+  }
+
+  /**
+   * Create a new bucket if bucket with name doesent exist
+   * */
   async createBucket(bucketName: string): Promise<string> {
     try {
       const bucketExists = await this.minioClient.bucketExists(bucketName);
@@ -33,7 +66,9 @@ export class StorageService {
     }
   }
 
-  // List all buckets
+  /**
+   * Lists all available buckets
+   * */
   async listBuckets(): Promise<string[]> {
     try {
       const buckets = await this.minioClient.listBuckets();
@@ -43,68 +78,187 @@ export class StorageService {
     }
   }
 
-  // List all bucket files
-  async listFiles(bucketName: string): Promise<string[]> {
+  /**
+   * Lists all files for a given project
+   * */
+  async listProjectFiles(userId: string, projectId: string): Promise<string[]> {
     try {
+      await this.initializeDefaultBucket();
+      const prefix = `${userId}/${projectId}`;
       const objects: string[] = [];
-      const stream = this.minioClient.listObjectsV2(bucketName, '', true, '');
+      const stream = this.minioClient.listObjectsV2(
+        this.DEFAULT_BUCKET_NAME,
+        prefix,
+        true,
+        '',
+      );
+
       return new Promise((resolve, reject) => {
         stream.on('data', (obj: BucketItem) => {
           if (obj.name) {
-            objects.push(obj.name);
+            const filename = obj.name.replace(prefix, '');
+            objects.push(filename);
           }
         });
         stream.on('error', reject);
         stream.on('end', () => resolve(objects));
       });
     } catch (error) {
-      throw new Error(`Minio list failed: ${error}`);
+      throw new Error(`Failed to list project: ${projectId} files: ${error}`);
     }
   }
 
-  // Upload a new file
+  /**
+   * List all files of a given user
+   * */
+  async listUserFiles(
+    userId: string,
+  ): Promise<{ projectId: string; filename: string; fullPath: string }[]> {
+    try {
+      await this.initializeDefaultBucket();
+      const prefix = `${userId}/`;
+      const objects: {
+        projectId: string;
+        filename: string;
+        fullPath: string;
+      }[] = [];
+      const stream = this.minioClient.listObjectsV2(
+        this.DEFAULT_BUCKET_NAME,
+        prefix,
+        true,
+        '',
+      );
+
+      return new Promise((resolve, reject) => {
+        stream.on('data', (obj: BucketItem) => {
+          if (obj.name) {
+            const pathParts = obj.name.replace(prefix, '').split('/');
+            if (pathParts.length >= 2) {
+              objects.push({
+                projectId: pathParts[0],
+                filename: pathParts.slice(1).join('/'), // Handle nested files
+                fullPath: obj.name,
+              });
+            }
+          }
+        });
+        stream.on('error', reject);
+        stream.on('end', () => resolve(objects));
+      });
+    } catch (error) {
+      throw new Error(`Failed to list user files: ${error}`);
+    }
+  }
+
+  /**
+   * Upload a file to a given project
+   * */
   async uploadFile(
-    bucketName: string,
-    objectName: string,
+    userId: string,
+    projectId: string,
+    filename: string,
     file: Buffer,
   ): Promise<string> {
     try {
-      const bucketExists = await this.minioClient.bucketExists(bucketName);
+      await this.initializeDefaultBucket();
+      const objectPath = this.generateObjectPath(userId, projectId, filename);
 
-      if (!bucketExists) {
-        await this.createBucket(bucketName);
-      }
-
-      await this.minioClient.putObject(bucketName, objectName, file);
-      return `File uploaded successfully: ${objectName}`;
+      await this.minioClient.putObject(
+        this.DEFAULT_BUCKET_NAME,
+        objectPath,
+        file,
+      );
+      return `File uploaded successfully: ${objectPath}`;
     } catch (error) {
       throw new Error(`Upload failed: ${error}`);
     }
   }
 
-  // Download a file
-  async getFile(bucketName: string, objectName: string): Promise<Buffer> {
+  /**
+   * Delete a file from a project
+   * */
+  async deleteFile(
+    userId: string,
+    projectId: string,
+    filename: string,
+  ): Promise<string> {
     try {
-      const stream = await this.minioClient.getObject(bucketName, objectName);
-      const chunks: Buffer[] = [];
-
-      return new Promise((resolve, reject) => {
-        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-        stream.on('error', reject);
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-      });
+      const objectPath = this.generateObjectPath(userId, projectId, filename);
+      await this.minioClient.removeObject(this.DEFAULT_BUCKET_NAME, objectPath);
+      return `File deleted successfully: ${objectPath}`;
     } catch (error) {
-      throw new Error(`Download failed: ${error}`);
+      throw new Error(`Delete failed: ${error}`);
     }
   }
 
-  // Delete single file
-  async deleteFile(bucketName: string, objectName: string): Promise<string> {
+  /**
+   * Delete all files in a project
+   * */
+  async deleteAllProjectFiles(
+    userId: string,
+    projectId: string,
+  ): Promise<string> {
     try {
-      await this.minioClient.removeObject(bucketName, objectName);
-      return `File deleted successfully: ${objectName}`;
+      const files = await this.listProjectFiles(userId, projectId);
+      const deletePromises = files.map((filename) =>
+        this.deleteFile(userId, projectId, filename),
+      );
+
+      await Promise.all(deletePromises);
+      return `All files deleted for project: ${projectId} of user: ${userId}`;
     } catch (error) {
-      throw new Error(`Delete failed: ${error}`);
+      throw new Error(`Bulk delete failed: ${error}`);
+    }
+  }
+
+  /**
+   * Get presigned url from a object
+   * */
+  async getDownloadPresignedUrl(
+    userId: string,
+    projectId: string,
+    filename: string,
+    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+  ): Promise<string> {
+    try {
+      const objectPath = this.generateObjectPath(userId, projectId, filename);
+
+      return await this.minioClient.presignedGetObject(
+        this.DEFAULT_BUCKET_NAME,
+        objectPath,
+        expirySeconds,
+      );
+    } catch (error) {
+      throw new Error(`Failed to generate download URL: ${error}`);
+    }
+  }
+
+  /**
+   * Get all objects urls from a given project
+   * */
+  async getProjectFilesWithUrls(
+    userId: string,
+    projectId: string,
+    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+  ): Promise<{ filename: string; downloadUrl: string }[]> {
+    try {
+      const filenames = await this.listProjectFiles(userId, projectId);
+
+      const filesWithUrls = await Promise.all(
+        filenames.map(async (filename) => ({
+          filename,
+          downloadUrl: await this.getDownloadPresignedUrl(
+            userId,
+            projectId,
+            filename,
+            expirySeconds,
+          ),
+        })),
+      );
+
+      return filesWithUrls;
+    } catch (error) {
+      throw new Error(`Failed to get project files with URLs: ${error}`);
     }
   }
 }
