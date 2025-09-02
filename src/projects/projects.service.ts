@@ -8,7 +8,7 @@ import {
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Project } from './entities/project.entity';
+import { Project } from './entities/Project';
 import { Repository } from 'typeorm';
 
 @Injectable()

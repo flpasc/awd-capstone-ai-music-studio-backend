@@ -1,13 +1,13 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('projects')
-export class Project {
+@Entity('asset')
+export class Asset {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -17,8 +17,11 @@ export class Project {
   @Column()
   name: string;
 
+  @Column('json') // Store as JSON in database
+  metadata: AssetMetadata;
+
   @Column()
-  description: string;
+  format: AssetFormat;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
