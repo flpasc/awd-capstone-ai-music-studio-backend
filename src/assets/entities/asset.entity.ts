@@ -6,6 +6,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+interface AssetMetadata {}
+
+interface AssetFormat {}
+
 @Entity('asset')
 export class Asset {
   @PrimaryGeneratedColumn('uuid')
