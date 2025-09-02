@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AssetLink } from './entities/assets-link.entity';
+import { AssetLink } from './entities/asset-link.entity';
 
 @Injectable()
 export class AssetLinksService {

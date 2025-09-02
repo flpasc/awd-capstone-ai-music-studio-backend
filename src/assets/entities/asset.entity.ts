@@ -12,8 +12,8 @@ interface AssetMetadata {
 }
 
 export enum AssetFormat {
-  VIDEO = 'video',
   AUDIO = 'audio',
+  VIDEO = 'video',
   IMAGE = 'image',
 }
 
@@ -28,7 +28,7 @@ export class Asset {
   @Column()
   name: string;
 
-  @Column('json') // Store as JSON in database
+  @Column('json')
   metadata: AssetMetadata;
 
   @Column()
