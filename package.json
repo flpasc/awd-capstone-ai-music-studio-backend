@@ -17,7 +17,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "modules:update:running": "docker compose stop backend && npm run modules:update:stopped && docker compose start backend",
+    "modules:update:stopped": "docker compose run --rm --no-deps backend npm ci --prefix /app",
+    "modules:update": "docker compose ps -q backend | grep -q . && npm run modules:update:running || npm run modules:update:stopped"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
