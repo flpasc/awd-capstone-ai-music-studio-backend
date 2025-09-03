@@ -56,7 +56,10 @@ export class ProjectsService {
     }
 
     try {
-      const project = await this.projectsRepo.findOneBy({ id });
+      const project = await this.projectsRepo.findOne({
+        where: { id },
+        relations: ['assets'],
+      });
 
       if (!project) {
         throw new NotFoundException(`Project with id: ${id} does not exist`);
