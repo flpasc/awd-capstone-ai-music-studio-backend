@@ -8,8 +8,10 @@ import {
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
+import { Project } from './entities/project.entity';
+
+const DEFAULT_USER_ID = '1';
 
 @Injectable()
 export class ProjectsService {
@@ -23,6 +25,7 @@ export class ProjectsService {
       const { name, description } = createProjectDto;
 
       const newProject = this.projectsRepo.create({
+        userId: DEFAULT_USER_ID,
         name,
         description,
       });
@@ -53,7 +56,10 @@ export class ProjectsService {
     }
 
     try {
-      const project = await this.projectsRepo.findOneBy({ id });
+      const project = await this.projectsRepo.findOne({
+        where: { id },
+        relations: ['assets'],
+      });
 
       if (!project) {
         throw new NotFoundException(`Project with id: ${id} does not exist`);
