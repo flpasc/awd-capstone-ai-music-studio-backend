@@ -3,7 +3,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,7 +10,7 @@ import {
 
 export interface AssetMetadata {
   size: number;
-  duration: number;
+  mimetype: string;
 }
 
 export enum AssetFormat {
@@ -44,10 +43,5 @@ export class Asset {
   updatedAt: Date;
 
   @ManyToMany(() => Project, (project) => project.assets)
-  // @JoinTable({
-  //   name: 'project_assets',
-  //   joinColumn: { name: 'project_id', referencedColumnName: 'id' },
-  //   inverseJoinColumn: { name: 'asset_id', referencedColumnName: 'id' },
-  // })
   projects: Project[];
 }

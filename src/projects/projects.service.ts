@@ -11,6 +11,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 
+const DEFAULT_USER_ID = '1';
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -23,7 +25,7 @@ export class ProjectsService {
       const { name, description } = createProjectDto;
 
       const newProject = this.projectsRepo.create({
-        userId: '1',
+        userId: DEFAULT_USER_ID,
         name,
         description,
       });

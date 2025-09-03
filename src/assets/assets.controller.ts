@@ -28,7 +28,7 @@ export class AssetsController {
     private readonly storageService: StorageService,
   ) {}
 
-  @Post()
+  @Post(':projectId')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('projectId') projectId: string,
@@ -57,11 +57,12 @@ export class AssetsController {
     );
 
     // TODO: Add asset id to return
+    // TODO: Get correct format
     await this.assetsService.create({
       userId: DEFAULT_USER_ID,
-      projectId: '1',
-      name: 'Default Asset Testing',
-      metadata: { size: 20, duration: 2 },
+      projectId,
+      name: file.originalname,
+      metadata: { size: file.size, mimetype: file.mimetype },
       format: AssetFormat.AUDIO,
     });
 
