@@ -8,7 +8,6 @@ import { Project } from 'src/projects/entities/project.entity';
 
 // TODO: Remove default userId
 const DEFAULT_USER_ID = '1';
-const DEFAULT_PROJECT_ID = 'Project1';
 
 @Injectable()
 export class AssetsService {
@@ -22,7 +21,7 @@ export class AssetsService {
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
     try {
-      const { name, metadata, format } = createAssetDto;
+      const { name, metadata, format, projectId } = createAssetDto;
       const newAsset = this.assetsRepo.create({
         userId: DEFAULT_USER_ID,
         name,
@@ -30,8 +29,9 @@ export class AssetsService {
         format,
       });
 
+      const saveAsset = await this.assetsRepo.save(newAsset);
       const project = await this.projectsRepo.findOne({
-        where: { name: DEFAULT_PROJECT_ID },
+        where: { id: projectId },
         relations: ['assets'],
       });
 
@@ -39,10 +39,11 @@ export class AssetsService {
         throw new Error(`No project available`);
       }
 
-      project.assets.push(newAsset);
+      project.assets.push(saveAsset);
+      console.log(project, saveAsset);
       await this.projectsRepo.save(project);
 
-      return await this.assetsRepo.save(newAsset);
+      return saveAsset;
     } catch (error) {
       const errorMessage =
         error instanceof Error

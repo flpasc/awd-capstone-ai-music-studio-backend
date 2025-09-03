@@ -77,10 +77,6 @@ export class AssetsController {
     };
   }
 
-  create(@Body() createAssetDto: CreateAssetDto) {
-    return this.assetsService.create(createAssetDto);
-  }
-
   @Get()
   findAll() {
     return this.assetsService.findAll();
