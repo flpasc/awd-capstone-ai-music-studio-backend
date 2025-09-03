@@ -16,6 +16,7 @@ import { AssetLinksModule } from './assets-link/assets-link.module';
       url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.NODE_ENV !== 'production',
+      logging: true,
     }),
     UsersModule,
     ProjectsModule,
