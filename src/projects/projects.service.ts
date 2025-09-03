@@ -23,6 +23,7 @@ export class ProjectsService {
       const { name, description } = createProjectDto;
 
       const newProject = this.projectsRepo.create({
+        userId: '1',
         name,
         description,
       });

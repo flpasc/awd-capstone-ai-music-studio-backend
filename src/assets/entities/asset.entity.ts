@@ -1,7 +1,10 @@
+import { Project } from 'src/projects/entities/project.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -39,4 +42,12 @@ export class Asset {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ManyToMany(() => Project, (project) => project.assets)
+  // @JoinTable({
+  //   name: 'project_assets',
+  //   joinColumn: { name: 'project_id', referencedColumnName: 'id' },
+  //   inverseJoinColumn: { name: 'asset_id', referencedColumnName: 'id' },
+  // })
+  projects: Project[];
 }

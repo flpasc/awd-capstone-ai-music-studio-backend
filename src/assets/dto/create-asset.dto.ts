@@ -12,6 +12,9 @@ export class CreateAssetDto {
   name: string;
 
   @Column()
+  projectId: string;
+
+  @Column()
   metadata: AssetMetadata;
 
   @Column()

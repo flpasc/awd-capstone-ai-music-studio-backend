@@ -4,15 +4,20 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Asset } from './entities/asset.entity';
 import { Repository } from 'typeorm';
+import { Project } from 'src/projects/entities/project.entity';
 
 // TODO: Remove default userId
 const DEFAULT_USER_ID = '1';
+const DEFAULT_PROJECT_ID = 'Project1';
 
 @Injectable()
 export class AssetsService {
   constructor(
     @InjectRepository(Asset)
     private readonly assetsRepo: Repository<Asset>,
+
+    @InjectRepository(Project)
+    private readonly projectsRepo: Repository<Project>,
   ) {}
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
@@ -24,6 +29,18 @@ export class AssetsService {
         metadata,
         format,
       });
+
+      const project = await this.projectsRepo.findOne({
+        where: { name: DEFAULT_PROJECT_ID },
+        relations: ['assets'],
+      });
+
+      if (!project) {
+        throw new Error(`No project available`);
+      }
+
+      project.assets.push(newAsset);
+      await this.projectsRepo.save(project);
 
       return await this.assetsRepo.save(newAsset);
     } catch (error) {

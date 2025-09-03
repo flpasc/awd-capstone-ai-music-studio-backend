@@ -7,7 +7,6 @@ import { ProjectsModule } from './projects/projects.module';
 import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
-import { AssetLinksModule } from './assets-link/assets-link.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { AssetLinksModule } from './assets-link/assets-link.module';
     MinioModule,
     TasksModule,
     AssetsModule,
-    AssetLinksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

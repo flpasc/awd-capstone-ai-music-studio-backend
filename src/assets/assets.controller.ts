@@ -59,6 +59,7 @@ export class AssetsController {
     // TODO: Add asset id to return
     await this.assetsService.create({
       userId: DEFAULT_USER_ID,
+      projectId: '1',
       name: 'Default Asset Testing',
       metadata: { size: 20, duration: 2 },
       format: AssetFormat.AUDIO,
