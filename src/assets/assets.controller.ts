@@ -28,6 +28,7 @@ export class AssetsController {
     private readonly storageService: StorageService,
   ) {}
 
+  // TODO: Add endpoint for multi file upload
   @Post(':projectId')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(

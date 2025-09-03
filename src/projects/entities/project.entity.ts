@@ -9,6 +9,11 @@ import {
   JoinTable,
 } from 'typeorm';
 
+export interface StorageUrl {
+  filename: string;
+  downloadUrl: string;
+}
+
 @Entity('projects')
 export class Project {
   @PrimaryGeneratedColumn('uuid')
@@ -36,4 +41,6 @@ export class Project {
     inverseJoinColumn: { name: 'asset_id', referencedColumnName: 'id' },
   })
   assets: Asset[];
+
+  storageUrls?: StorageUrl[];
 }

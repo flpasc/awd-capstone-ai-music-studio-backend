@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Client, BucketItem } from 'minio';
+import { StorageUrl } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class StorageService {
@@ -22,7 +23,7 @@ export class StorageService {
 
   /**
    * Helper to generate object path: userId/projectId/filename
-   * */
+   */
   private generateObjectPath(
     userId: string,
     projectId: string,
@@ -32,8 +33,19 @@ export class StorageService {
   }
 
   /**
+   * Helper to generate object path: userId/projectId/filename
+   */
+  private generateGenerationPath(
+    userId: string,
+    projectId: string,
+    filename: string,
+  ): string {
+    return `${userId}/${projectId}/${filename}`;
+  }
+
+  /**
    * Initialze default bucket if it doesnt exist
-   * */
+   */
   async initializeDefaultBucket(): Promise<void> {
     try {
       const bucketExists = await this.minioClient.bucketExists(
@@ -50,7 +62,7 @@ export class StorageService {
 
   /**
    * Create a new bucket if bucket with name doesent exist
-   * */
+   */
   async createBucket(bucketName: string): Promise<string> {
     try {
       const bucketExists = await this.minioClient.bucketExists(bucketName);
@@ -68,7 +80,7 @@ export class StorageService {
 
   /**
    * Lists all available buckets
-   * */
+   */
   async listBuckets(): Promise<string[]> {
     try {
       const buckets = await this.minioClient.listBuckets();
@@ -80,7 +92,7 @@ export class StorageService {
 
   /**
    * Lists all files for a given project
-   * */
+   */
   async listProjectFiles(userId: string, projectId: string): Promise<string[]> {
     try {
       await this.initializeDefaultBucket();
@@ -110,7 +122,7 @@ export class StorageService {
 
   /**
    * List all files of a given user
-   * */
+   */
   async listUserFiles(
     userId: string,
   ): Promise<{ projectId: string; filename: string; fullPath: string }[]> {
@@ -151,8 +163,41 @@ export class StorageService {
   }
 
   /**
+   * Lists all project generations
+   */
+  async listProjectGenerations(
+    userId: string,
+    projectId: string,
+  ): Promise<string[]> {
+    try {
+      await this.initializeDefaultBucket();
+      const prefix = `${userId}/${projectId}/generations/`;
+      const objects: string[] = [];
+      const stream = this.minioClient.listObjectsV2(
+        this.DEFAULT_BUCKET_NAME,
+        prefix,
+        true,
+        '',
+      );
+
+      return new Promise((resolve, reject) => {
+        stream.on('data', (obj: BucketItem) => {
+          if (obj.name) {
+            const filename = obj.name.replace(prefix, '');
+            objects.push(filename);
+          }
+        });
+        stream.on('error', reject);
+        stream.on('end', () => resolve(objects));
+      });
+    } catch (error) {
+      throw new Error(`Failed to list project: ${projectId} files: ${error}`);
+    }
+  }
+
+  /**
    * Upload a file to a given project
-   * */
+   */
   async uploadFile(
     userId: string,
     projectId: string,
@@ -176,7 +221,7 @@ export class StorageService {
 
   /**
    * Delete a file from a project
-   * */
+   */
   async deleteFile(
     userId: string,
     projectId: string,
@@ -192,8 +237,36 @@ export class StorageService {
   }
 
   /**
+   * Generate a presigned upload url
+   * used by worker for generated video upload
+   */
+  async getUploadPresignedUrl(
+    userId: string,
+    projectId: string,
+    filename: string,
+    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+  ): Promise<string> {
+    try {
+      await this.initializeDefaultBucket();
+      const objectPath = this.generateGenerationPath(
+        userId,
+        projectId,
+        filename,
+      );
+
+      return await this.minioClient.presignedPutObject(
+        this.DEFAULT_BUCKET_NAME,
+        objectPath,
+        expirySeconds,
+      );
+    } catch (error) {
+      throw new Error(`Failed to generate upload URL: ${error}`);
+    }
+  }
+
+  /**
    * Delete all files in a project
-   * */
+   */
   async deleteAllProjectFiles(
     userId: string,
     projectId: string,
@@ -213,7 +286,7 @@ export class StorageService {
 
   /**
    * Get presigned url from a object
-   * */
+   */
   async getDownloadPresignedUrl(
     userId: string,
     projectId: string,
@@ -233,14 +306,14 @@ export class StorageService {
     }
   }
 
-  /**
+  /*
    * Get all objects urls from a given project
-   * */
+   */
   async getProjectFilesWithUrls(
     userId: string,
     projectId: string,
     expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
-  ): Promise<{ filename: string; downloadUrl: string }[]> {
+  ): Promise<StorageUrl[]> {
     try {
       const filenames = await this.listProjectFiles(userId, projectId);
 
