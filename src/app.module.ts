@@ -7,9 +7,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
-import { AssetsLinkService } from './assets-link/assets-link.service';
-import { AssetsLinkModule } from './assets-link/assets-link.module';
-import { AssetLinkController } from './asset-link/asset-link.controller';
+import { AssetLinksModule } from './assets-link/assets-link.module';
 
 @Module({
   imports: [
@@ -24,9 +22,9 @@ import { AssetLinkController } from './asset-link/asset-link.controller';
     MinioModule,
     TasksModule,
     AssetsModule,
-    AssetsLinkModule,
+    AssetLinksModule,
   ],
-  controllers: [AppController, AssetLinkController],
-  providers: [AppService, AssetsLinkService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

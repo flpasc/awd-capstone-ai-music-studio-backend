@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { AssetLink } from './entities/asset-link.entity';
 
 @Injectable()
-export class AssetLinksService {
+export class AssetsLinksService {
   constructor(
     @InjectRepository(AssetLink)
     private assetLinkRepository: Repository<AssetLink>,
