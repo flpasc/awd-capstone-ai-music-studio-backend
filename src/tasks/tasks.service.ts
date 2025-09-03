@@ -17,6 +17,13 @@ export class TasksService {
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
   ) {}
+
+  // TODO: Task worker needs from frontend:
+  // - ImageUrls: []
+  // - imageTimings: []
+  // - audioUrls: []
+  // - audioTimings: []
+  // - outputVideoKey: string
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     try {
       const { kind, projectId, status } = createTaskDto;
