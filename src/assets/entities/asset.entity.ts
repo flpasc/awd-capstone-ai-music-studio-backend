@@ -18,6 +18,7 @@ export enum AssetFormat {
   AUDIO = 'audio',
   VIDEO = 'video',
   IMAGE = 'image',
+  OUTPUT = 'output',
 }
 
 @Entity('asset')
