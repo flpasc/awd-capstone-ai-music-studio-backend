@@ -5,6 +5,7 @@ import { StorageUrl } from 'src/projects/entities/project.entity';
 @Injectable()
 export class StorageService {
   private minioClient: Client;
+  private minioPresignedUrlClient: Client;
 
   private readonly DEFAULT_BUCKET_NAME = 'app-assets';
   private readonly DEFAULT_PRESIGNED_URL_EXPIRE_TIME = 3600;
@@ -14,6 +15,14 @@ export class StorageService {
   constructor() {
     this.minioClient = new Client({
       endPoint: process.env.MINIO_ENDPOINT || 'minio',
+      port: parseInt(process.env.MINIO_PORT || '9000'),
+      useSSL: process.env.MINIO_SSL === 'true',
+      accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+      secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+    });
+
+    this.minioPresignedUrlClient = new Client({
+      endPoint: 'localhost',
       port: parseInt(process.env.MINIO_PORT || '9000'),
       useSSL: process.env.MINIO_SSL === 'true',
       accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
@@ -296,7 +305,7 @@ export class StorageService {
     try {
       const objectPath = this.generateObjectPath(userId, projectId, filename);
 
-      return await this.minioClient.presignedGetObject(
+      return await this.minioPresignedUrlClient.presignedGetObject(
         this.DEFAULT_BUCKET_NAME,
         objectPath,
         expirySeconds,

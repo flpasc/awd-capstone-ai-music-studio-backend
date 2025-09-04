@@ -62,7 +62,8 @@ export class AssetsController {
     await this.assetsService.create({
       userId: DEFAULT_USER_ID,
       projectId,
-      name: file.originalname,
+      originalName: file.originalname,
+      storageName: filename,
       metadata: { size: file.size, mimetype: file.mimetype },
       format: AssetFormat.AUDIO,
     });

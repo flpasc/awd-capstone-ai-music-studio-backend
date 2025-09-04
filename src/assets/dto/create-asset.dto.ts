@@ -9,7 +9,11 @@ export class CreateAssetDto {
 
   @IsString()
   @IsNotEmpty()
-  name: string;
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  storageName: string;
 
   @Column()
   projectId: string;

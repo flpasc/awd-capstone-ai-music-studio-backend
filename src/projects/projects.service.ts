@@ -70,14 +70,35 @@ export class ProjectsService {
         );
       }
 
-      const storageUrls = await this.storageService.getProjectFilesWithUrls(
-        DEFAULT_USER_ID,
-        project.id,
+      const assetsWithUrls = await Promise.all(
+        project.assets.map(async (asset) => {
+          try {
+            const downloadUrl =
+              await this.storageService.getDownloadPresignedUrl(
+                asset.userId,
+                projectId,
+                asset.storageName,
+              );
+
+            return {
+              ...asset,
+              downloadUrl,
+            };
+          } catch (error) {
+            console.error(
+              `Failed to generate url for asset: ${asset.id}`,
+              error,
+            );
+            return {
+              ...asset,
+            };
+          }
+        }),
       );
 
       return {
         ...project,
-        storageUrls,
+        assets: assetsWithUrls,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
