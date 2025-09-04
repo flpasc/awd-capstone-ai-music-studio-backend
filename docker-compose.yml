@@ -19,12 +19,14 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_USE_SSL=false
+      - VIDEO_WORKER_URL=http://video-worker:3002
     depends_on:
       - postgres
       - minio
     volumes:
       - .:/app
       - /app/node_modules
+      - backend_dist_data:/app/dist
     networks:
       - backend-network
     # restart: unless-stopped
@@ -63,8 +65,11 @@ services:
 
 networks:
   backend-network:
+    name: ai-studio-shared-network
+    external: true
     driver: bridge
 
 volumes:
+  backend_dist_data:
   postgres_data:
   minio_data:
