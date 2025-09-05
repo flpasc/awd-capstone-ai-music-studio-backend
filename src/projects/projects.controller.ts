@@ -28,7 +28,7 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
@@ -120,21 +120,53 @@ export class ProjectsController {
       audioTimings,
       outputKey,
     };
-    const slideshowRequest = await fetch(
-      `${process.env.VIDEO_WORKER_URL}/tasks/${task.id}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    let slideshowResponse: Response;
+    try {
+      slideshowResponse = await fetch(
+        `${process.env.VIDEO_WORKER_URL}/tasks/${task.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      },
-    );
-    const unsafeResponse: unknown = await slideshowRequest.json();
+      );
+    } catch (error) {
+      console.error('Error calling video service:', error);
+      // update task status to error
+      const updateTaskDto: UpdateTaskDto = {
+        status: TaskStatus.ERROR,
+        error: 'Error calling video service',
+      };
+      await this.tasksService.update(task.id, updateTaskDto);
+      throw new Error('Error calling video service');
+    }
+    if (!slideshowResponse.ok) {
+      console.error(
+        'Video service returned error:',
+        slideshowResponse.status,
+        await slideshowResponse.text(),
+      );
+      // update task status to error
+      const updateTaskDto: UpdateTaskDto = {
+        status: TaskStatus.ERROR,
+        error: `Video service returned status ${slideshowResponse.status}`,
+      };
+      await this.tasksService.update(task.id, updateTaskDto);
+      throw new Error(
+        `Video service returned status ${slideshowResponse.status}`,
+      );
+    }
+    const unsafeResponse: unknown = await slideshowResponse.json();
     const safeSlideshowResponse =
       createSlideshowWorkerResponseDtoSchema.safeParse(unsafeResponse);
     if (!safeSlideshowResponse.success) {
+      console.error(
+        'Invalid response from video service:',
+        safeSlideshowResponse.error,
+      );
       throw new Error('Invalid response from video service');
     }
 

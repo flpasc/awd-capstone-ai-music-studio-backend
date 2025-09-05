@@ -67,8 +67,7 @@ export type CreateSlideshowResponseDto = Task;
 
 export const createSlideshowWorkerResponseDtoSchema = z
   .object({
-    taskId: z.string(),
-    objectName: z.string(),
+    id: z.string(),
     progress: z.number(),
     status: z.enum(['processing', 'done', 'error']),
     error: z.string().optional(),
