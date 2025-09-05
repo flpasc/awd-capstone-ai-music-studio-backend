@@ -17,6 +17,8 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
 import { AssetFormat } from './entities/asset.entity';
+
+import { getAssetFormat } from './helpers/asset-format.helper';
 import type { Express } from 'express';
 
 const DEFAULT_USER_ID = '1';
@@ -59,14 +61,15 @@ export class AssetsController {
     );
 
     // TODO: Add asset id to return
-    // TODO: Get correct format
+    const fileFormat = getAssetFormat(filename);
+
     await this.assetsService.create({
       userId: DEFAULT_USER_ID,
       projectId,
       originalName: file.originalname,
       storageName: filename,
       metadata: { size: file.size, mimetype: file.mimetype },
-      format: AssetFormat.AUDIO,
+      format: fileFormat,
     });
 
     return {
