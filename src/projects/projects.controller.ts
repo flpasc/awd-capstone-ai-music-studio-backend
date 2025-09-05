@@ -27,7 +27,6 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-    private readonly storageService: StorageService,
   ) {}
 
   @Post()
