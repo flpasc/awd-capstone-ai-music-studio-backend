@@ -3,7 +3,7 @@ import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Asset } from './entities/asset.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 
 // TODO: Remove default userId
@@ -17,7 +17,7 @@ export class AssetsService {
 
     @InjectRepository(Project)
     private readonly projectsRepo: Repository<Project>,
-  ) {}
+  ) { }
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
     try {
@@ -70,5 +70,9 @@ export class AssetsService {
 
   remove(id: number) {
     return `This action removes a #${id} asset`;
+  }
+
+  async findAllByIds(ids: string[]): Promise<Asset[]> {
+    return this.assetsRepo.find({ where: { id: In(ids) } });
   }
 }

@@ -26,12 +26,16 @@ export class TasksService {
   // - outputVideoKey: string
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     try {
-      const { kind, projectId, status } = createTaskDto;
-      const newTask = this.taskRepo.create({
+      const { kind, projectId, status, id, progress, error } = createTaskDto;
+      let plainTask: Partial<Task> = {
         projectId,
         kind,
         status,
-      });
+        progress,
+        error,
+      };
+      if (id) plainTask = { ...plainTask, id };
+      const newTask = this.taskRepo.create(plainTask);
 
       return await this.taskRepo.save(newTask);
     } catch (error) {
