@@ -39,7 +39,8 @@ export class AssetsController {
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
-          fileType: '.(png|img|jpeg|jpg|webp|pdf|txt|doc|docx)',
+          fileType:
+            '.(png|img|jpeg|jpg|webp|pdf|txt|doc|docx|mp3|wav|m4a|mp4|mov|webm|mpeg|wmv|mpg)',
         })
         .addMaxSizeValidator({
           maxSize: FILE_MAX_UPLOAD_SIZE,
