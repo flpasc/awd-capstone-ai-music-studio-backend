@@ -30,7 +30,10 @@ export class Asset {
   userId: string;
 
   @Column()
-  name: string;
+  originalName: string;
+
+  @Column()
+  storageName: string;
 
   @Column('json')
   metadata: AssetMetadata;

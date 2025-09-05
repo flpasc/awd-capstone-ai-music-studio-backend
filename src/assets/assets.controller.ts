@@ -29,6 +29,7 @@ export class AssetsController {
     private readonly storageService: StorageService,
   ) {}
 
+  // TODO: Add endpoint for multi file upload
   @Post(':projectId')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
@@ -62,7 +63,8 @@ export class AssetsController {
     await this.assetsService.create({
       userId: DEFAULT_USER_ID,
       projectId,
-      name: file.originalname,
+      originalName: file.originalname,
+      storageName: filename,
       metadata: { size: file.size, mimetype: file.mimetype },
       format: AssetFormat.AUDIO,
     });

@@ -10,6 +10,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
+import { StorageService } from 'src/storage/storage.service';
 
 const DEFAULT_USER_ID = '1';
 
@@ -18,6 +19,7 @@ export class ProjectsService {
   constructor(
     @InjectRepository(Project)
     private readonly projectsRepo: Repository<Project>,
+    private readonly storageService: StorageService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
@@ -50,29 +52,61 @@ export class ProjectsService {
     }
   }
 
-  async findOne(id: string): Promise<Project> {
-    if (!id) {
+  // TODO: Should the user be able to upload same fiel name??
+  async findOne(projectId: string): Promise<Project> {
+    if (!projectId) {
       throw new BadRequestException('Project ID is required');
     }
 
     try {
       const project = await this.projectsRepo.findOne({
-        where: { id },
+        where: { id: projectId },
         relations: ['assets'],
       });
 
       if (!project) {
-        throw new NotFoundException(`Project with id: ${id} does not exist`);
+        throw new NotFoundException(
+          `Project with id: ${projectId} does not exist`,
+        );
       }
 
-      return project;
+      const assetsWithUrls = await Promise.all(
+        project.assets.map(async (asset) => {
+          try {
+            const downloadUrl =
+              await this.storageService.getDownloadPresignedUrl(
+                asset.userId,
+                projectId,
+                asset.storageName,
+              );
+
+            return {
+              ...asset,
+              downloadUrl,
+            };
+          } catch (error) {
+            console.error(
+              `Failed to generate url for asset: ${asset.id}`,
+              error,
+            );
+            return {
+              ...asset,
+            };
+          }
+        }),
+      );
+
+      return {
+        ...project,
+        assets: assetsWithUrls,
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Find project error: ${errorMessage} - ID: ${id}`);
+      console.error(`Find project error: ${errorMessage} - ID: ${projectId}`);
       throw new InternalServerErrorException('Failed to retrieve project');
     }
   }

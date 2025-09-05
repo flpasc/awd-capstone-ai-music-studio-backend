@@ -21,15 +21,17 @@ export class AssetsService {
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
     try {
-      const { name, metadata, format, projectId } = createAssetDto;
+      const { originalName, storageName, metadata, format, projectId } =
+        createAssetDto;
       const newAsset = this.assetsRepo.create({
         userId: DEFAULT_USER_ID,
-        name,
+        originalName,
+        storageName,
         metadata,
         format,
       });
 
-      const saveAsset = await this.assetsRepo.save(newAsset);
+      const savedAsset = await this.assetsRepo.save(newAsset);
       const project = await this.projectsRepo.findOne({
         where: { id: projectId },
         relations: ['assets'],
@@ -39,11 +41,11 @@ export class AssetsService {
         throw new Error(`No project available`);
       }
 
-      project.assets.push(saveAsset);
-      console.log(project, saveAsset);
+      project.assets.push(savedAsset);
+      console.log(project, savedAsset);
       await this.projectsRepo.save(project);
 
-      return saveAsset;
+      return savedAsset;
     } catch (error) {
       const errorMessage =
         error instanceof Error

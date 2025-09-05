@@ -29,7 +29,8 @@ services:
       - backend_dist_data:/app/dist
     networks:
       - backend-network
-    # restart: unless-stopped
+    extra_hosts:
+      - "localhost:host-gateway"
 
   postgres:
     image: postgres:15-alpine
