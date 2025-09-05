@@ -12,14 +12,15 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import {
   CreateSlideshowDto,
+  createSlideshowWorkerResponseDtoSchema,
   CreateSlideshowResponseDto,
-  createSlideshowResponseDtoSchema,
 } from './dto/create-slideshow.dto';
 import { TasksService } from 'src/tasks/tasks.service';
 import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { AssetsService } from 'src/assets/assets.service';
 import { StorageService } from 'src/storage/storage.service';
+import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -102,6 +103,16 @@ export class ProjectsController {
       projectId,
       `slideshow-${new Date().toISOString()}.mp4`,
     );
+
+    /// Create a task in our db with status "pending"
+    const createTaskDto: CreateTaskDto = {
+      projectId,
+      kind: TaskKind.CREATE_SLIDESHOW,
+    };
+    const task = await this.tasksService.create(createTaskDto);
+
+    /// Make request to video service
+
     const payload = {
       imageKeys,
       imageTimings,
@@ -109,9 +120,8 @@ export class ProjectsController {
       audioTimings,
       outputKey,
     };
-
     const slideshowRequest = await fetch(
-      `${process.env.VIDEO_WORKER_URL}/tasks`,
+      `${process.env.VIDEO_WORKER_URL}/tasks/${task.id}`,
       {
         method: 'POST',
         headers: {
@@ -123,41 +133,37 @@ export class ProjectsController {
     );
     const unsafeResponse: unknown = await slideshowRequest.json();
     const safeSlideshowResponse =
-      createSlideshowResponseDtoSchema.safeParse(unsafeResponse);
+      createSlideshowWorkerResponseDtoSchema.safeParse(unsafeResponse);
     if (!safeSlideshowResponse.success) {
       throw new Error('Invalid response from video service');
     }
 
-    /// Create task in our db mapping response from video service to our Task entity
+    /// Update our task in db with returned status from video service
 
-    const { taskId: id, progress, error } = safeSlideshowResponse.data;
-    let status: TaskStatus;
-    switch (safeSlideshowResponse.data.status) {
-      case 'processing':
-        status = TaskStatus.RUNNING;
-        break;
-      case 'done':
-        status = TaskStatus.FINISHED;
-        break;
-      case 'error':
-        status = TaskStatus.ERROR;
-        break;
-      default:
-        throw new Error('Invalid status from video service');
+    const { progress, error } = safeSlideshowResponse.data;
+    function mapStatus(status: string): TaskStatus {
+      switch (status) {
+        case 'processing':
+          return TaskStatus.RUNNING;
+        case 'done':
+          return TaskStatus.FINISHED;
+        case 'error':
+          return TaskStatus.ERROR;
+        default:
+          throw new Error('Invalid status from video service');
+      }
     }
-    let createTaskDto: CreateTaskDto = {
-      id,
-      projectId,
-      kind: TaskKind.CREATE_SLIDESHOW,
+    const status: TaskStatus = mapStatus(safeSlideshowResponse.data.status);
+    let updateTaskDto: UpdateTaskDto = {
       status,
       progress,
     };
-    if (error) createTaskDto = { ...createTaskDto, error };
+    if (error) updateTaskDto = { ...updateTaskDto, error };
 
-    await this.tasksService.create(createTaskDto);
+    await this.tasksService.update(task.id, updateTaskDto);
 
     /// End of task creation in our db
 
-    return safeSlideshowResponse.data;
+    return task;
   }
 }

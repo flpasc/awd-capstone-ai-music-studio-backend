@@ -13,6 +13,7 @@
 // } from 'class-validator';
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { Task } from 'src/tasks/entities/task.entity';
 
 const createSlideshowSchema = z
   .object({
@@ -62,7 +63,9 @@ export class CreateSlideshowDto extends createZodDto(createSlideshowSchema) {
   // outputVideoKey: string;
 }
 
-export const createSlideshowResponseDtoSchema = z
+export type CreateSlideshowResponseDto = Task;
+
+export const createSlideshowWorkerResponseDtoSchema = z
   .object({
     taskId: z.string(),
     objectName: z.string(),
@@ -88,4 +91,4 @@ export const createSlideshowResponseDtoSchema = z
     }
   });
 
-export class CreateSlideshowResponseDto extends createZodDto(createSlideshowResponseDtoSchema) {}
+export class CreateSlideshowWorkerResponseDto extends createZodDto(createSlideshowWorkerResponseDtoSchema) {}
