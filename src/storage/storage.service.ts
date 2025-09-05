@@ -23,7 +23,7 @@ export class StorageService {
   /**
    * Helper to generate object path: userId/projectId/filename
    * */
-  private generateObjectPath(
+  public static generateObjectPath(
     userId: string,
     projectId: string,
     filename: string,
@@ -161,7 +161,11 @@ export class StorageService {
   ): Promise<string> {
     try {
       await this.initializeDefaultBucket();
-      const objectPath = this.generateObjectPath(userId, projectId, filename);
+      const objectPath = StorageService.generateObjectPath(
+        userId,
+        projectId,
+        filename,
+      );
 
       await this.minioClient.putObject(
         this.DEFAULT_BUCKET_NAME,
@@ -183,7 +187,11 @@ export class StorageService {
     filename: string,
   ): Promise<string> {
     try {
-      const objectPath = this.generateObjectPath(userId, projectId, filename);
+      const objectPath = StorageService.generateObjectPath(
+        userId,
+        projectId,
+        filename,
+      );
       await this.minioClient.removeObject(this.DEFAULT_BUCKET_NAME, objectPath);
       return `File deleted successfully: ${objectPath}`;
     } catch (error) {
@@ -221,7 +229,11 @@ export class StorageService {
     expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
   ): Promise<string> {
     try {
-      const objectPath = this.generateObjectPath(userId, projectId, filename);
+      const objectPath = StorageService.generateObjectPath(
+        userId,
+        projectId,
+        filename,
+      );
 
       return await this.minioClient.presignedGetObject(
         this.DEFAULT_BUCKET_NAME,

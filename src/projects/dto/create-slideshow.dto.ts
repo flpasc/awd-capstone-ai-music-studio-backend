@@ -16,28 +16,17 @@ import { createZodDto } from 'nestjs-zod';
 
 const createSlideshowSchema = z
   .object({
-    imageUrls: z.array(z.string()),
+    imageIds: z.array(z.string()),
     imageTimings: z.array(z.number().min(1)),
-    audioUrls: z.array(z.string()),
-    audioTimings: z.array(z.number().min(1)),
-    outputVideoKey: z.string().min(1).max(1024),
+    audioIds: z.array(z.string()),
+    audioTimings: z.array(z.number().min(1))
   })
-  .refine(
-    (data) => {
-      const parts = data.outputVideoKey.split('/');
-      return parts.length >= 2 && parts[0].length > 0 && parts[0] !== '..';
-    },
-    {
-      message: 'outputVideoKey must not be in a root folder',
-      path: ['outputVideoKey'],
-    },
-  )
-  .refine((data) => data.imageUrls.length === data.imageTimings.length, {
-    message: 'imageUrls and imageTimings must have the same length',
+  .refine((data) => data.imageIds.length === data.imageTimings.length, {
+    message: 'imageIIds and imageTimings must have the same length',
     path: ['imageTimings'],
   })
-  .refine((data) => data.audioUrls.length === data.audioTimings.length, {
-    message: 'audioUrls and audioTimings must have the same length',
+  .refine((data) => data.audioIds.length === data.audioTimings.length, {
+    message: 'audioIDs and audioTimings must have the same length',
     path: ['audioTimings'],
   });
 
@@ -73,9 +62,30 @@ export class CreateSlideshowDto extends createZodDto(createSlideshowSchema) {
   // outputVideoKey: string;
 }
 
-export const createSlideshowResponseSchema = z.object({
-  taskId: z.string(),
-  objectName: z.string(),
-});
+export const createSlideshowResponseDtoSchema = z
+  .object({
+    taskId: z.string(),
+    objectName: z.string(),
+    progress: z.number(),
+    status: z.enum(['processing', 'done', 'error']),
+    error: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.status === 'error') {
+      if (!val.error) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'error is required when status is "error"',
+          path: ['error'],
+        });
+      }
+    } else if (val.error !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'error must be undefined unless status is "error"',
+        path: ['error'],
+      });
+    }
+  });
 
-export class CreateSlideshowResponseDto extends createZodDto(createSlideshowResponseSchema) {}
+export class CreateSlideshowResponseDto extends createZodDto(createSlideshowResponseDtoSchema) {}
