@@ -25,7 +25,7 @@ export class StorageController {
 
   /**
    * Admin function to create a new bucket
-   * */
+   */
   @Post('buckets/:bucketName')
   async createBucket(@Param('bucketName') bucketName: string) {
     const result = await this.storageService.createBucket(bucketName);
@@ -34,7 +34,7 @@ export class StorageController {
 
   /**
    * Admin function to list all buckets
-   * */
+   */
   @Get('buckets')
   async listBuckets() {
     const buckets = await this.storageService.listBuckets();
