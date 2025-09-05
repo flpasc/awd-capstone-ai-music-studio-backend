@@ -1,0 +1,67 @@
+# Keep Docker build context small and exclude secrets/dev-only files
+
+# Node modules and logs
+node_modules
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+/dist
+/build
+/coverage
+/.nyc_output
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment files (secrets)
+.env
+.env.*
+# explicit local patterns per request
+*.local
+*.local.*
+
+# VCS
+.git
+.gitignore
+
+# IDE/Editor
+.vscode
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS/Cache
+.DS_Store
+
+# Tests and docs not needed in images
+/test
+CRUSH.md
+.crush
+
+# Package manager lock you don't want in image (optional)
+bun.lock
+
+# Compose files are not needed inside images
+/docker-compose.yml
+/docker-compose.*.yml
+
+# DB init scripts (used by postgres service, not backend image)
+/postgresql-init-scripts/
+
+# Lint/format configs not needed in images
+.eslint*
+eslint.config.*
+.prettier*
+.prettierignore

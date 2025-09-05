@@ -1,9 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { TaskKind, TaskStatus } from '../entities/task.entity';
 
 export class CreateTaskDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   projectId: string;
 
   @IsNotEmpty()
@@ -13,4 +17,10 @@ export class CreateTaskDto {
   @IsOptional()
   @IsEnum(TaskStatus)
   status?: TaskStatus;
+
+  @IsOptional()
+  progress?: number;
+
+  @IsOptional()
+  error?: string;
 }

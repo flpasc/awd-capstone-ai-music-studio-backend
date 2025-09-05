@@ -17,6 +17,7 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
 import { AssetFormat } from './entities/asset.entity';
+import type { Express } from 'express';
 
 const DEFAULT_USER_ID = '1';
 const FILE_MAX_UPLOAD_SIZE = 10000000;
