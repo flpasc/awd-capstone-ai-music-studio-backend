@@ -77,7 +77,7 @@ export class ProjectsController {
     }
     for (const image of images) {
       imageKeys.push(
-        StorageService.generateObjectPath(userId, projectId, image.name),
+        StorageService.generateObjectPath(userId, projectId, image.storageName),
       );
     }
     const audios = await this.assetsService.findAllByIds(
@@ -88,7 +88,7 @@ export class ProjectsController {
     }
     for (const audio of audios) {
       audioKeys.push(
-        StorageService.generateObjectPath(userId, projectId, audio.name),
+        StorageService.generateObjectPath(userId, projectId, audio.storageName),
       );
     }
 
