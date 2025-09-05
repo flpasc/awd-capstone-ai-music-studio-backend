@@ -19,6 +19,7 @@ export enum AssetFormat {
   VIDEO = 'video',
   IMAGE = 'image',
   OUTPUT = 'output',
+  UNKNOWN = 'unknown',
 }
 
 @Entity('asset')
