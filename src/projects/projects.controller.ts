@@ -92,6 +92,11 @@ export class ProjectsController {
       );
     }
 
+    const imageTimings =
+      createSlideshowDto.imageTimings ?? imageKeys.map(() => 5);
+    const audioTimings =
+      createSlideshowDto.audioTimings ?? audioKeys.map(() => 5);
+
     // TODO: create function to get output video key
     const outputKey = StorageService.generateObjectPath(
       userId,
@@ -100,9 +105,9 @@ export class ProjectsController {
     );
     const payload = {
       imageKeys,
-      imageTimings: createSlideshowDto.imageTimings,
+      imageTimings,
       audioKeys,
-      audioTimings: createSlideshowDto.audioTimings,
+      audioTimings,
       outputKey,
     };
 
@@ -115,7 +120,8 @@ export class ProjectsController {
           Accept: 'application/json',
         },
         body: JSON.stringify(payload),
-      });
+      },
+    );
     const unsafeResponse: unknown = await slideshowRequest.json();
     const safeSlideshowResponse =
       createSlideshowResponseDtoSchema.safeParse(unsafeResponse);
