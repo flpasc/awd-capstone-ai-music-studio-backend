@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -63,7 +64,7 @@ export class ProjectsService {
 
     try {
       const project = await this.projectsRepo.findOne({
-        where: { id: projectId },
+        where: { id: projectId, userId },
         relations: ['assets'],
       });
 
@@ -116,13 +117,18 @@ export class ProjectsService {
 
   async update(
     id: string,
+    userId: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<Project> {
     if (!id) {
       throw new BadRequestException('Project ID is required');
     }
     try {
-      const project = await this.findOne(id);
+      const project = await this.findOne(id, userId);
+
+      if (project.userId !== userId) {
+        throw new ForbiddenException('You can only update your own projects');
+      }
 
       if (updateProjectDto.name && updateProjectDto.name !== project.name) {
         const duplicateProject = await this.projectsRepo.findOne({
@@ -136,7 +142,7 @@ export class ProjectsService {
         }
       }
       await this.projectsRepo.update(id, updateProjectDto);
-      return await this.findOne(id);
+      return await this.findOne(id, userId);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -152,13 +158,13 @@ export class ProjectsService {
     }
   }
 
-  async remove(id: string): Promise<Project> {
+  async remove(id: string, userId: string): Promise<Project> {
     if (!id) {
       throw new BadRequestException('Project ID is required');
     }
 
     try {
-      const project = await this.findOne(id);
+      const project = await this.findOne(id, userId);
       await this.projectsRepo.delete(id);
       return project;
     } catch (error) {

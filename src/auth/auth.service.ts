@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { SafeUser } from './current-user.decorator';
 
 @Injectable()
 export class AuthService {
   /**
    * Fake auth always returns same user!!
    */
-  validateUser(): Omit<User, 'password' | 'createdAt'> {
+  validateUser(): SafeUser {
     return {
       id: '1',
       email: 'test@testmail.com',
@@ -15,15 +15,17 @@ export class AuthService {
     };
   }
 
-  async getCurrentUser(): Promise<Omit<User, 'password' | 'createdAt'>> {
-    return await this.validateUser();
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getCurrentUser(): Promise<SafeUser> {
+    return this.validateUser();
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async login(
     email: string,
     //password: string,
-  ): Promise<Omit<User, 'password' | 'createdAt'>> {
-    return await {
+  ): Promise<SafeUser> {
+    return {
       id: '1',
       email: email || 'test@testmail.com',
       firstName: 'Thorsten',

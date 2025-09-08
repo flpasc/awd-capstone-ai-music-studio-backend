@@ -8,11 +8,18 @@ import { TasksService } from 'src/tasks/tasks.service';
 import { StorageService } from 'src/storage/storage.service';
 import { AssetsService } from 'src/assets/assets.service';
 import { Asset } from 'src/assets/entities/asset.entity';
+import { AuthService } from 'src/auth/auth.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Project, Task, Asset])],
   controllers: [ProjectsController],
-  providers: [ProjectsService, TasksService, StorageService, AssetsService],
+  providers: [
+    ProjectsService,
+    TasksService,
+    StorageService,
+    AssetsService,
+    AuthService,
+  ],
   exports: [ProjectsService],
 })
 export class ProjectsModule {}

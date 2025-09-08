@@ -23,7 +23,7 @@ import { AssetsService } from 'src/assets/assets.service';
 import { StorageService } from 'src/storage/storage.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
-import { User } from 'src/users/entities/user.entity';
+import type { SafeUser } from 'src/auth/current-user.decorator';
 import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
 
 @Controller('projects')
@@ -33,11 +33,11 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) { }
+  ) {}
 
   @Post()
   create(
-    @CurrentUser() user: User,
+    @CurrentUser() user: SafeUser,
     @Body() createProjectDto: CreateProjectDto,
   ) {
     return this.projectsService.create({
@@ -47,19 +47,19 @@ export class ProjectsController {
   }
 
   @Get()
-  async findAll(@CurrentUser() user: User) {
+  async findAll(@CurrentUser() user: SafeUser) {
     return await this.projectsService.findAllByUser(user.id);
   }
 
   // TODO: Return all project related assets with presigned urls
   @Get(':id')
-  findOne(@CurrentUser() user: User, @Param('id') id: string) {
-    return (this.projectsService.findOne(id), user.id);
+  findOne(@CurrentUser() user: SafeUser, @Param('id') id: string) {
+    return this.projectsService.findOne(id, user.id);
   }
 
   @Patch(':id')
   update(
-    @CurrentUser() user: User,
+    @CurrentUser() user: SafeUser,
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
@@ -67,17 +67,16 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  remove(@CurrentUser() user: User, @Param('id') id: string) {
+  remove(@CurrentUser() user: SafeUser, @Param('id') id: string) {
     return this.projectsService.remove(id, user.id);
   }
 
   @Post('/:id/slideshow')
   async createSlideshow(
     @Param('id') projectId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: SafeUser,
     @Body() createSlideshowDto: CreateSlideshowDto,
   ): Promise<CreateSlideshowResponseDto> {
-    // FIXME: get userId from auth service
     const userId = user.id;
 
     /// Call video service to create slideshow
