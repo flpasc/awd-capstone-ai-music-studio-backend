@@ -5,11 +5,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class TasksService {
@@ -37,7 +37,7 @@ export class TasksService {
       if (id) plainTask = { ...plainTask, id };
       const newTask = this.taskRepo.create(plainTask);
 
-      return await this.taskRepo.save(newTask);
+      return this.taskRepo.save(newTask);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknow error creating task';
@@ -48,7 +48,7 @@ export class TasksService {
 
   async findAll(): Promise<Task[]> {
     try {
-      return await this.taskRepo.find();
+      return this.taskRepo.find();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknow error listing tasks';
