@@ -42,17 +42,6 @@ export class StorageService {
   }
 
   /**
-   * Helper to generate object path: userId/projectId/filename
-   */
-  private generateObjectPath(
-    userId: string,
-    projectId: string,
-    filename: string,
-  ): string {
-    return `${userId}/${projectId}/${filename}`;
-  }
-
-  /**
    * Initialze default bucket if it doesnt exist
    */
   async initializeDefaultBucket(): Promise<void> {
@@ -265,7 +254,11 @@ export class StorageService {
   ): Promise<string> {
     try {
       await this.initializeDefaultBucket();
-      const objectPath = this.generateObjectPath(userId, projectId, filename);
+      const objectPath = StorageService.generateObjectPath(
+        userId,
+        projectId,
+        filename,
+      );
 
       return await this.minioClient.presignedPutObject(
         this.DEFAULT_BUCKET_NAME,
@@ -313,7 +306,7 @@ export class StorageService {
         filename,
       );
 
-      return await this.minioPresignedUrlClient.presignedGetObject(
+      return this.minioPresignedUrlClient.presignedGetObject(
         this.DEFAULT_BUCKET_NAME,
         objectPath,
         expirySeconds,
