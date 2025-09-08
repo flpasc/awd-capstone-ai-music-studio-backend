@@ -1,4 +1,5 @@
 import { Asset } from 'src/assets/entities/asset.entity';
+import { Task } from 'src/tasks/entities/task.entity';
 import {
   Column,
   Entity,
@@ -7,6 +8,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 
 export interface StorageUrl {
@@ -43,4 +45,7 @@ export class Project {
   assets: Asset[];
 
   storageUrls?: StorageUrl[];
+
+  @OneToMany(() => Task, (task) => task.project)
+  tasks: Task[];
 }

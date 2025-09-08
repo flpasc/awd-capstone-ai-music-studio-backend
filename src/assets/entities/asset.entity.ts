@@ -48,10 +48,5 @@ export class Asset {
   updatedAt: Date;
 
   @ManyToMany(() => Project, (project) => project.assets)
-  // @JoinTable({
-  //   name: 'project_assets',
-  //   joinColumn: { name: 'project_id', referencedColumnName: 'id' },
-  //   inverseJoinColumn: { name: 'asset_id', referencedColumnName: 'id' },
-  // })
   projects: Project[];
 }
