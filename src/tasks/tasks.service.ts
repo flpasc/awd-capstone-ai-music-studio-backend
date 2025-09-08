@@ -8,14 +8,17 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Task } from './entities/task.entity';
+import { Task, TaskStatus } from './entities/task.entity';
 import { Repository } from 'typeorm';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
+    @InjectRepository(Project)
+    private readonly projectsRepo: Repository<Project>,
   ) {}
 
   // TODO: Task worker needs from frontend:
@@ -26,17 +29,25 @@ export class TasksService {
   // - outputVideoKey: string
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     try {
-      const { kind, projectId, status, id, progress, error } = createTaskDto;
-      let plainTask: Partial<Task> = {
-        projectId,
-        kind,
-        status,
-        progress,
-        error,
-      };
-      if (id) plainTask = { ...plainTask, id };
-      const newTask = this.taskRepo.create(plainTask);
+      const { projectId, kind, status, progress, error } = createTaskDto;
 
+      const project = await this.projectsRepo.findOne({
+        where: { id: projectId },
+      });
+
+      if (!project) {
+        throw new NotFoundException(
+          `Project with the id: ${projectId} not found`,
+        );
+      }
+
+      const newTask = this.taskRepo.create({
+        project,
+        kind,
+        status: status || TaskStatus.PENDING,
+        progress: progress || 0,
+        error,
+      });
       return await this.taskRepo.save(newTask);
     } catch (error) {
       const errorMessage =
@@ -46,9 +57,12 @@ export class TasksService {
     }
   }
 
-  async findAll(): Promise<Task[]> {
+  async findAllByUser(userId: string): Promise<Task[]> {
     try {
-      return await this.taskRepo.find();
+      return await this.taskRepo.find({
+        where: { project: { userId } },
+        relations: ['project'],
+      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknow error listing tasks';

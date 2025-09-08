@@ -20,16 +20,24 @@ const createSlideshowSchema = z
     imageIds: z.array(z.string()),
     imageTimings: z.array(z.number().min(1)).optional(),
     audioIds: z.array(z.string()),
-    audioTimings: z.array(z.number().min(1)).optional()
+    audioTimings: z.array(z.number().min(1)).optional(),
   })
-  .refine((data) => data.imageTimings && data.imageIds.length === data.imageTimings.length, {
-    message: 'imageIIds and imageTimings must have the same length',
-    path: ['imageTimings'],
-  })
-  .refine((data) => data.audioTimings && data.audioIds.length === data.audioTimings.length, {
-    message: 'audioIDs and audioTimings must have the same length',
-    path: ['audioTimings'],
-  });
+  .refine(
+    (data) =>
+      data.imageTimings && data.imageIds.length === data.imageTimings.length,
+    {
+      message: 'imageIIds and imageTimings must have the same length',
+      path: ['imageTimings'],
+    },
+  )
+  .refine(
+    (data) =>
+      data.audioTimings && data.audioIds.length === data.audioTimings.length,
+    {
+      message: 'audioIDs and audioTimings must have the same length',
+      path: ['audioTimings'],
+    },
+  );
 
 export class CreateSlideshowDto extends createZodDto(createSlideshowSchema) {
   // @IsNotEmpty()
@@ -90,4 +98,6 @@ export const createSlideshowWorkerResponseDtoSchema = z
     }
   });
 
-export class CreateSlideshowWorkerResponseDto extends createZodDto(createSlideshowWorkerResponseDtoSchema) {}
+export class CreateSlideshowWorkerResponseDto extends createZodDto(
+  createSlideshowWorkerResponseDtoSchema,
+) {}
