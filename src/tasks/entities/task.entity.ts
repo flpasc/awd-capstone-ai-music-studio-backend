@@ -1,7 +1,10 @@
+import { Project } from 'src/projects/entities/project.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -26,8 +29,8 @@ export class Task {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: false, name: 'project_id' })
-  projectId: string;
+  // @Column({ nullable: false, name: 'project_id' })
+  // projectId: string;
 
   @Column({ nullable: false, type: 'enum', enum: TaskKind })
   kind: TaskKind;
@@ -46,4 +49,8 @@ export class Task {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ManyToOne(() => Project, (project) => project.tasks)
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
 }
