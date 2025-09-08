@@ -1,10 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Project } from 'src/projects/entities/project.entity';
+import { In, Repository } from 'typeorm';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Asset } from './entities/asset.entity';
-import { In, Repository } from 'typeorm';
-import { Project } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class AssetsService {
@@ -18,19 +18,10 @@ export class AssetsService {
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
     try {
-      const { userId, originalName, storageName, metadata, format, projectId } =
-        createAssetDto;
-      const newAsset = this.assetsRepo.create({
-        userId,
-        originalName,
-        storageName,
-        metadata,
-        format,
-      });
-
+      const newAsset = this.assetsRepo.create(createAssetDto);
       const savedAsset = await this.assetsRepo.save(newAsset);
       const project = await this.projectsRepo.findOne({
-        where: { id: projectId },
+        where: { id: createAssetDto.projectId },
         relations: ['assets'],
       });
 
