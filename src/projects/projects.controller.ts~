@@ -21,10 +21,13 @@ import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { AssetsService } from 'src/assets/assets.service';
 import { StorageService } from 'src/storage/storage.service';
+<<<<<<< HEAD
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+=======
 import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
+>>>>>>> feature/connect-services
 
 @Controller('projects')
 @UseGuards(AuthGuard)
