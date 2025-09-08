@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
@@ -95,11 +95,9 @@ export class TasksService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<DeleteResult> {
     try {
-      const task = await this.findOne(id);
-      await this.taskRepo.delete(id);
-      return task;
+      return this.taskRepo.delete({ id });
     } catch (error) {
       if (
         error instanceof NotFoundException ||
