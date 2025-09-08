@@ -1,17 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { StorageService } from 'src/storage/storage.service';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
-import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
 export class ProjectsService {
@@ -22,18 +21,15 @@ export class ProjectsService {
   ) {}
 
   async create(
-    createProjectDto: CreateProjectDto & { userId: string },
+    createProjectDto: CreateProjectDto,
+    userId: string,
   ): Promise<Project> {
     try {
-      const { name, description, userId } = createProjectDto;
-
       const newProject = this.projectsRepo.create({
+        ...createProjectDto,
         userId,
-        name,
-        description,
       });
-
-      return await this.projectsRepo.save(newProject);
+      return this.projectsRepo.save(newProject);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -44,7 +40,7 @@ export class ProjectsService {
 
   async findAllByUser(userId: string): Promise<Project[]> {
     try {
-      return await this.projectsRepo.find({
+      return this.projectsRepo.find({
         where: { userId },
         relations: ['assets'],
       });
