@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -20,8 +21,12 @@ import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { AssetsService } from 'src/assets/assets.service';
 import { StorageService } from 'src/storage/storage.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import { User } from 'src/users/entities/user.entity';
 
 @Controller('projects')
+@UseGuards(AuthGuard)
 export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
@@ -30,38 +35,49 @@ export class ProjectsController {
   ) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(createProjectDto);
+  create(
+    @CurrentUser() user: User,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
+    return this.projectsService.create({
+      ...createProjectDto,
+      userId: user.id,
+    });
   }
 
   @Get()
-  findAll() {
-    return this.projectsService.findAll();
+  async findAll(@CurrentUser() user: User) {
+    return await this.projectsService.findAllByUser(user.id);
   }
 
   // TODO: Return all project related assets with presigned urls
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return (this.projectsService.findOne(id), user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(id, updateProjectDto);
+  update(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    return this.projectsService.update(id, user.id, updateProjectDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
+  remove(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.projectsService.remove(id, user.id);
   }
 
   @Post('/:id/slideshow')
   async createSlideshow(
     @Param('id') projectId: string,
+    @CurrentUser() user: User,
     @Body() createSlideshowDto: CreateSlideshowDto,
   ): Promise<CreateSlideshowResponseDto> {
     // FIXME: get userId from auth service
-    const userId = '1';
+    const userId = user.id;
 
     /// Call video service to create slideshow
 
