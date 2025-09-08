@@ -6,63 +6,78 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import {
   CreateSlideshowDto,
+  createSlideshowWorkerResponseDtoSchema,
   CreateSlideshowResponseDto,
-  createSlideshowResponseDtoSchema,
 } from './dto/create-slideshow.dto';
 import { TasksService } from 'src/tasks/tasks.service';
 import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { AssetsService } from 'src/assets/assets.service';
 import { StorageService } from 'src/storage/storage.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import type { SafeUser } from 'src/auth/current-user.decorator';
+import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
 
 @Controller('projects')
+@UseGuards(AuthGuard)
 export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-    private readonly storageService: StorageService,
   ) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(createProjectDto);
+  create(
+    @CurrentUser() user: SafeUser,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
+    return this.projectsService.create({
+      ...createProjectDto,
+      userId: user.id,
+    });
   }
 
   @Get()
-  findAll() {
-    return this.projectsService.findAll();
+  async findAll(@CurrentUser() user: SafeUser) {
+    return await this.projectsService.findAllByUser(user.id);
   }
 
   // TODO: Return all project related assets with presigned urls
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@CurrentUser() user: SafeUser, @Param('id') id: string) {
+    return this.projectsService.findOne(id, user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(id, updateProjectDto);
+  update(
+    @CurrentUser() user: SafeUser,
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    return this.projectsService.update(id, user.id, updateProjectDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
+  remove(@CurrentUser() user: SafeUser, @Param('id') id: string) {
+    return this.projectsService.remove(id, user.id);
   }
 
   @Post('/:id/slideshow')
   async createSlideshow(
     @Param('id') projectId: string,
+    @CurrentUser() user: SafeUser,
     @Body() createSlideshowDto: CreateSlideshowDto,
   ): Promise<CreateSlideshowResponseDto> {
-    // FIXME: get userId from auth service
-    const userId = '1';
+    const userId = user.id;
 
     /// Call video service to create slideshow
 
@@ -77,7 +92,7 @@ export class ProjectsController {
     }
     for (const image of images) {
       imageKeys.push(
-        StorageService.generateObjectPath(userId, projectId, image.name),
+        StorageService.generateObjectPath(userId, projectId, image.storageName),
       );
     }
     const audios = await this.assetsService.findAllByIds(
@@ -88,7 +103,7 @@ export class ProjectsController {
     }
     for (const audio of audios) {
       audioKeys.push(
-        StorageService.generateObjectPath(userId, projectId, audio.name),
+        StorageService.generateObjectPath(userId, projectId, audio.storageName),
       );
     }
 
@@ -103,6 +118,16 @@ export class ProjectsController {
       projectId,
       `slideshow-${new Date().toISOString()}.mp4`,
     );
+
+    /// Create a task in our db with status "pending"
+    const createTaskDto: CreateTaskDto = {
+      projectId,
+      kind: TaskKind.CREATE_SLIDESHOW,
+    };
+    const task = await this.tasksService.create(createTaskDto);
+
+    /// Make request to video service
+
     const payload = {
       imageKeys,
       imageTimings,
@@ -110,55 +135,82 @@ export class ProjectsController {
       audioTimings,
       outputKey,
     };
-
-    const slideshowRequest = await fetch(
-      `${process.env.VIDEO_WORKER_URL}/tasks`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    let slideshowResponse: Response;
+    try {
+      slideshowResponse = await fetch(
+        `${process.env.VIDEO_WORKER_URL}/tasks/${task.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      },
-    );
-    const unsafeResponse: unknown = await slideshowRequest.json();
+      );
+    } catch (error) {
+      console.error('Error calling video service:', error);
+      // update task status to error
+      const updateTaskDto: UpdateTaskDto = {
+        status: TaskStatus.ERROR,
+        error: 'Error calling video service',
+      };
+      await this.tasksService.update(task.id, updateTaskDto);
+      throw new Error('Error calling video service');
+    }
+    if (!slideshowResponse.ok) {
+      console.error(
+        'Video service returned error:',
+        slideshowResponse.status,
+        await slideshowResponse.text(),
+      );
+      // update task status to error
+      const updateTaskDto: UpdateTaskDto = {
+        status: TaskStatus.ERROR,
+        error: `Video service returned status ${slideshowResponse.status}`,
+      };
+      await this.tasksService.update(task.id, updateTaskDto);
+      throw new Error(
+        `Video service returned status ${slideshowResponse.status}`,
+      );
+    }
+    const unsafeResponse: unknown = await slideshowResponse.json();
     const safeSlideshowResponse =
-      createSlideshowResponseDtoSchema.safeParse(unsafeResponse);
+      createSlideshowWorkerResponseDtoSchema.safeParse(unsafeResponse);
     if (!safeSlideshowResponse.success) {
+      console.error(
+        'Invalid response from video service:',
+        safeSlideshowResponse.error,
+      );
       throw new Error('Invalid response from video service');
     }
 
-    /// Create task in our db mapping response from video service to our Task entity
+    /// Update our task in db with returned status from video service
 
-    const { taskId: id, progress, error } = safeSlideshowResponse.data;
-    let status: TaskStatus;
-    switch (safeSlideshowResponse.data.status) {
-      case 'processing':
-        status = TaskStatus.RUNNING;
-        break;
-      case 'done':
-        status = TaskStatus.FINISHED;
-        break;
-      case 'error':
-        status = TaskStatus.ERROR;
-        break;
-      default:
-        throw new Error('Invalid status from video service');
+    const { progress, error } = safeSlideshowResponse.data;
+    function mapStatus(status: string): TaskStatus {
+      switch (status) {
+        case 'processing':
+          return TaskStatus.RUNNING;
+        case 'done':
+          return TaskStatus.FINISHED;
+        case 'error':
+          return TaskStatus.ERROR;
+        default:
+          throw new Error('Invalid status from video service');
+      }
     }
-    let createTaskDto: CreateTaskDto = {
-      id,
-      projectId,
-      kind: TaskKind.CREATE_SLIDESHOW,
+    const status: TaskStatus = mapStatus(safeSlideshowResponse.data.status);
+    let updateTaskDto: UpdateTaskDto = {
       status,
       progress,
     };
-    if (error) createTaskDto = { ...createTaskDto, error };
+    if (error) updateTaskDto = { ...updateTaskDto, error };
 
-    await this.tasksService.create(createTaskDto);
+    await this.tasksService.update(task.id, updateTaskDto);
 
     /// End of task creation in our db
 
-    return safeSlideshowResponse.data;
+    return task;
   }
 }

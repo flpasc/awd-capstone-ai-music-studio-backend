@@ -6,9 +6,6 @@ import { Asset } from './entities/asset.entity';
 import { In, Repository } from 'typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 
-// TODO: Remove default userId
-const DEFAULT_USER_ID = '1';
-
 @Injectable()
 export class AssetsService {
   constructor(
@@ -17,14 +14,14 @@ export class AssetsService {
 
     @InjectRepository(Project)
     private readonly projectsRepo: Repository<Project>,
-  ) { }
+  ) {}
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
     try {
-      const { originalName, storageName, metadata, format, projectId } =
+      const { userId, originalName, storageName, metadata, format, projectId } =
         createAssetDto;
       const newAsset = this.assetsRepo.create({
-        userId: DEFAULT_USER_ID,
+        userId,
         originalName,
         storageName,
         metadata,

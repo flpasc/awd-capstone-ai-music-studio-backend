@@ -1,4 +1,4 @@
-import { AssetFormat } from "../entities/asset.entity";
+import { AssetFormat } from '../entities/asset.entity';
 
 const AUDIO_EXTENSIONS = new Set(['mp3', 'wav', 'm4a']);
 
@@ -12,20 +12,20 @@ const getFileExtensions = (filename: string) => {
   return filename.slice(lastDotIndex + 1).toLowerCase();
 };
 
-export const getAssetFormat(filename: string): AssetFormat {
-  const extension = getFileExtensions(filename)
+export const getAssetFormat = (filename: string): AssetFormat => {
+  const extension = getFileExtensions(filename);
 
   if (AUDIO_EXTENSIONS.has(extension)) {
-    return AssetFormat.AUDIO
-  }
-  
-  if (VIDEO_EXTENSIONS.has(extension)) {
-    return AssetFormat.VIDEO
-  }
-  
-  if (IMAGE_EXTENSIONS.has(extension)) {
-    return AssetFormat.IMAGE
+    return AssetFormat.AUDIO;
   }
 
-  return AssetFormat.UNKNOWN
-}
+  if (VIDEO_EXTENSIONS.has(extension)) {
+    return AssetFormat.VIDEO;
+  }
+
+  if (IMAGE_EXTENSIONS.has(extension)) {
+    return AssetFormat.IMAGE;
+  }
+
+  return AssetFormat.UNKNOWN;
+};
