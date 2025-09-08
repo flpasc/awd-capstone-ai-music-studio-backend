@@ -1,17 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { StorageService } from 'src/storage/storage.service';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
-import { StorageService } from 'src/storage/storage.service';
 
 @Injectable()
 export class ProjectsService {
@@ -22,18 +21,15 @@ export class ProjectsService {
   ) {}
 
   async create(
-    createProjectDto: CreateProjectDto & { userId: string },
+    createProjectDto: CreateProjectDto,
+    userId: string,
   ): Promise<Project> {
     try {
-      const { name, description, userId } = createProjectDto;
-
       const newProject = this.projectsRepo.create({
+        ...createProjectDto,
         userId,
-        name,
-        description,
       });
-
-      return await this.projectsRepo.save(newProject);
+      return this.projectsRepo.save(newProject);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -44,7 +40,7 @@ export class ProjectsService {
 
   async findAllByUser(userId: string): Promise<Project[]> {
     try {
-      return await this.projectsRepo.find({
+      return this.projectsRepo.find({
         where: { userId },
         relations: ['assets'],
       });
@@ -58,10 +54,6 @@ export class ProjectsService {
 
   // TODO: Should the user be able to upload same fiel name??
   async findOne(projectId: string, userId: string): Promise<Project> {
-    if (!projectId) {
-      throw new BadRequestException('Project ID is required');
-    }
-
     try {
       const project = await this.projectsRepo.findOne({
         where: { id: projectId, userId },
@@ -120,19 +112,11 @@ export class ProjectsService {
     userId: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<Project> {
-    if (!id) {
-      throw new BadRequestException('Project ID is required');
-    }
     try {
       const project = await this.findOne(id, userId);
-
-      if (project.userId !== userId) {
-        throw new ForbiddenException('You can only update your own projects');
-      }
-
       if (updateProjectDto.name && updateProjectDto.name !== project.name) {
         const duplicateProject = await this.projectsRepo.findOne({
-          where: { userId: project.userId, name: updateProjectDto.name },
+          where: { userId: userId, name: updateProjectDto.name },
         });
 
         if (duplicateProject) {
@@ -158,20 +142,11 @@ export class ProjectsService {
     }
   }
 
-  async remove(id: string, userId: string): Promise<Project> {
-    if (!id) {
-      throw new BadRequestException('Project ID is required');
-    }
-
+  async remove(id: string, userId: string): Promise<DeleteResult> {
     try {
-      const project = await this.findOne(id, userId);
-      await this.projectsRepo.delete(id);
-      return project;
+      return this.projectsRepo.delete({ id, userId });
     } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
+      if (error instanceof NotFoundException) {
         throw error;
       }
       const errorMessage =

@@ -1,30 +1,30 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
-import { ProjectsService } from './projects.service';
+import { AssetsService } from 'src/assets/assets.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import type { SafeUser } from 'src/auth/current-user.decorator';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import { StorageService } from 'src/storage/storage.service';
+import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
+import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
+import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
+import { TasksService } from 'src/tasks/tasks.service';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
 import {
   CreateSlideshowDto,
-  createSlideshowWorkerResponseDtoSchema,
   CreateSlideshowResponseDto,
+  createSlideshowWorkerResponseDtoSchema,
 } from './dto/create-slideshow.dto';
-import { TasksService } from 'src/tasks/tasks.service';
-import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
-import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
-import { AssetsService } from 'src/assets/assets.service';
-import { StorageService } from 'src/storage/storage.service';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { CurrentUser } from 'src/auth/current-user.decorator';
-import type { SafeUser } from 'src/auth/current-user.decorator';
-import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectsService } from './projects.service';
 
 @Controller('projects')
 @UseGuards(AuthGuard)
@@ -40,10 +40,7 @@ export class ProjectsController {
     @CurrentUser() user: SafeUser,
     @Body() createProjectDto: CreateProjectDto,
   ) {
-    return this.projectsService.create({
-      ...createProjectDto,
-      userId: user.id,
-    });
+    return this.projectsService.create(createProjectDto, user.id);
   }
 
   @Get()

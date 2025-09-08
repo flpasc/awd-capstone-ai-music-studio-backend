@@ -5,12 +5,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Project } from 'src/projects/entities/project.entity';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Task, TaskStatus } from './entities/task.entity';
-import { Repository } from 'typeorm';
-import { Project } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class TasksService {
@@ -72,9 +72,6 @@ export class TasksService {
   }
 
   async findOne(id: string) {
-    if (!id) {
-      throw new BadRequestException(`Task ID is requiered`);
-    }
     try {
       const task = await this.taskRepo.findOneBy({ id });
 
@@ -95,18 +92,13 @@ export class TasksService {
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
-    if (!id) {
-      throw new BadRequestException(`Task ID is required`);
-    }
-
     try {
       await this.taskRepo.update(id, updateTaskDto);
-      return await this.findOne(id);
+      return this.findOne(id);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
-        error instanceof ConflictException ||
-        error instanceof BadRequestException
+        error instanceof ConflictException
       ) {
         throw error;
       }
@@ -117,15 +109,9 @@ export class TasksService {
     }
   }
 
-  async remove(id: string) {
-    if (!id) {
-      throw new InternalServerErrorException(`Task ID is required`);
-    }
-
+  async remove(id: string): Promise<DeleteResult> {
     try {
-      const task = await this.findOne(id);
-      await this.taskRepo.delete(id);
-      return task;
+      return this.taskRepo.delete({ id });
     } catch (error) {
       if (
         error instanceof NotFoundException ||

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Client, BucketItem } from 'minio';
+import { BucketItem, Client } from 'minio';
 import { StorageUrl } from 'src/projects/entities/project.entity';
 
 @Injectable()
@@ -34,17 +34,6 @@ export class StorageService {
    * Helper to generate object path: userId/projectId/filename
    */
   public static generateObjectPath(
-    userId: string,
-    projectId: string,
-    filename: string,
-  ): string {
-    return `${userId}/${projectId}/${filename}`;
-  }
-
-  /**
-   * Helper to generate object path: userId/projectId/filename
-   */
-  private generateGenerationPath(
     userId: string,
     projectId: string,
     filename: string,
@@ -265,7 +254,7 @@ export class StorageService {
   ): Promise<string> {
     try {
       await this.initializeDefaultBucket();
-      const objectPath = this.generateGenerationPath(
+      const objectPath = StorageService.generateObjectPath(
         userId,
         projectId,
         filename,
@@ -317,7 +306,7 @@ export class StorageService {
         filename,
       );
 
-      return await this.minioPresignedUrlClient.presignedGetObject(
+      return this.minioPresignedUrlClient.presignedGetObject(
         this.DEFAULT_BUCKET_NAME,
         objectPath,
         expirySeconds,
