@@ -10,21 +10,24 @@ import {
   UploadedFile,
   HttpStatus,
   ParseFilePipeBuilder,
+  UseGuards,
 } from '@nestjs/common';
 import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
-import { AssetFormat } from './entities/asset.entity';
 
 import { getAssetFormat } from './helpers/asset-format.helper';
 import type { Express } from 'express';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import type { SafeUser } from 'src/auth/current-user.decorator';
 
-const DEFAULT_USER_ID = '1';
 const FILE_MAX_UPLOAD_SIZE = 10000000;
 
 @Controller('assets')
+@UseGuards(AuthGuard)
 export class AssetsController {
   constructor(
     private readonly assetsService: AssetsService,
@@ -36,6 +39,7 @@ export class AssetsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('projectId') projectId: string,
+    @CurrentUser() user: SafeUser,
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
@@ -55,7 +59,7 @@ export class AssetsController {
     const filename = `${Date.now()}-${file.originalname}`;
 
     const uploadResult = await this.storageService.uploadFile(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
       filename,
       file.buffer,
@@ -65,7 +69,7 @@ export class AssetsController {
     const fileFormat = getAssetFormat(filename);
 
     await this.assetsService.create({
-      userId: DEFAULT_USER_ID,
+      userId: user.id,
       projectId,
       originalName: file.originalname,
       storageName: filename,
@@ -80,7 +84,7 @@ export class AssetsController {
       projectId,
       size: file.size,
       mimetype: file.mimetype,
-      userId: DEFAULT_USER_ID,
+      userId: user.id,
     };
   }
 
