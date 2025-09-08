@@ -58,9 +58,6 @@ export class TasksService {
   }
 
   async findOne(id: string) {
-    if (!id) {
-      throw new BadRequestException(`Task ID is requiered`);
-    }
     try {
       const task = await this.taskRepo.findOneBy({ id });
 
@@ -81,18 +78,13 @@ export class TasksService {
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
-    if (!id) {
-      throw new BadRequestException(`Task ID is required`);
-    }
-
     try {
       await this.taskRepo.update(id, updateTaskDto);
-      return await this.findOne(id);
+      return this.findOne(id);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
-        error instanceof ConflictException ||
-        error instanceof BadRequestException
+        error instanceof ConflictException
       ) {
         throw error;
       }
@@ -104,10 +96,6 @@ export class TasksService {
   }
 
   async remove(id: string) {
-    if (!id) {
-      throw new InternalServerErrorException(`Task ID is required`);
-    }
-
     try {
       const task = await this.findOne(id);
       await this.taskRepo.delete(id);

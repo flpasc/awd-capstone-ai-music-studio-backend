@@ -58,10 +58,6 @@ export class ProjectsService {
 
   // TODO: Should the user be able to upload same fiel name??
   async findOne(projectId: string, userId: string): Promise<Project> {
-    if (!projectId) {
-      throw new BadRequestException('Project ID is required');
-    }
-
     try {
       const project = await this.projectsRepo.findOne({
         where: { id: projectId, userId },
@@ -120,19 +116,11 @@ export class ProjectsService {
     userId: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<Project> {
-    if (!id) {
-      throw new BadRequestException('Project ID is required');
-    }
     try {
       const project = await this.findOne(id, userId);
-
-      if (project.userId !== userId) {
-        throw new ForbiddenException('You can only update your own projects');
-      }
-
       if (updateProjectDto.name && updateProjectDto.name !== project.name) {
         const duplicateProject = await this.projectsRepo.findOne({
-          where: { userId: project.userId, name: updateProjectDto.name },
+          where: { userId: userId, name: updateProjectDto.name },
         });
 
         if (duplicateProject) {
@@ -158,20 +146,11 @@ export class ProjectsService {
     }
   }
 
-  async remove(id: string, userId: string): Promise<Project> {
-    if (!id) {
-      throw new BadRequestException('Project ID is required');
-    }
-
+  async remove(id: string, userId: string): Promise<DeleteResult> {
     try {
-      const project = await this.findOne(id, userId);
-      await this.projectsRepo.delete(id);
-      return project;
+      return this.projectsRepo.delete({ id, userId });
     } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
+      if (error instanceof NotFoundException) {
         throw error;
       }
       const errorMessage =
