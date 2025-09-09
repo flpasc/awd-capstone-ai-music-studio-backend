@@ -57,7 +57,7 @@ export class ProjectsService {
     try {
       const project = await this.projectsRepo.findOne({
         where: { id: projectId, userId },
-        relations: ['assets'],
+        relations: ['assets', 'tasks'],
       });
 
       if (!project) {
