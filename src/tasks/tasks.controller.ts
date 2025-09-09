@@ -26,7 +26,7 @@ export class TasksController {
   constructor(
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto) {
@@ -46,7 +46,11 @@ export class TasksController {
   // TODO: only authorized users and worker service can update tasks
   // for the worker service validate incoming requests using JWT or API keys
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @CurrentUser() user: SafeUser) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @CurrentUser() user: SafeUser,
+  ) {
     console.log('Webhook received for task:', id, 'payload:', updateTaskDto);
     const updatedTask = await this.tasksService.update(id, updateTaskDto);
 
