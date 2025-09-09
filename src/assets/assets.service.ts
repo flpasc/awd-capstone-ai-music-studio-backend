@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 import { In, Repository } from 'typeorm';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { UpdateAssetDto } from './dto/update-asset.dto';
 import { Asset } from './entities/asset.entity';
+import { UpdateAssetDto } from './dto/update-asset.dto';
 
 @Injectable()
 export class AssetsService {
@@ -52,6 +52,7 @@ export class AssetsService {
     return `This action returns a #${id} asset`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(id: number, updateAssetDto: UpdateAssetDto) {
     return `This action updates a #${id} asset`;
   }

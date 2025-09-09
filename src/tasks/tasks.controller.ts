@@ -14,11 +14,19 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
+import { TaskKind, TaskStatus } from './entities/task.entity';
+import { AssetsService } from 'src/assets/assets.service';
+import type { CreateSlideshowResult } from './entities/task.entity';
+import { CreateAssetDto } from 'src/assets/dto/create-asset.dto';
+import { getAssetFormat } from 'src/assets/helpers/asset-format.helper';
 
 @Controller('tasks')
 @UseGuards(AuthGuard)
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly assetsService: AssetsService,
+  ) {}
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto) {
@@ -35,9 +43,51 @@ export class TasksController {
     return this.tasksService.findOne(id);
   }
 
+  // TODO: only authorized users and worker service can update tasks
+  // for the worker service validate incoming requests using JWT or API keys
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(id, updateTaskDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @CurrentUser() user: SafeUser,
+  ) {
+    console.log('Webhook received for task:', id, 'payload:', updateTaskDto);
+    const updatedTask = await this.tasksService.update(id, updateTaskDto);
+
+    // create the asset if task is done
+    if (updatedTask && updatedTask.status === TaskStatus.FINISHED) {
+      if (updatedTask.kind === TaskKind.CREATE_SLIDESHOW) {
+        // FIXME: this cast is not safe, need to validate the result shape with zod
+        const result = updateTaskDto.result as unknown as CreateSlideshowResult;
+
+        if (result?.videoKey ?? result?.videoEtag) {
+          const createAssetDto: CreateAssetDto = {
+            userId: user.id,
+            projectId: updatedTask.projectId,
+            originalName: result.videoKey.split('/').pop() ?? 'slideshow.mp4',
+            storageName: result.videoKey,
+            metadata: {
+              size: 0, // TODO: Size will be determined by storage service or by worker service
+              mimetype: 'video/mp4',
+            },
+            format: getAssetFormat(result.videoKey),
+          };
+
+          const asset = await this.assetsService.create(createAssetDto);
+          console.log(
+            `Asset ${asset.id} created for completed slideshow task:`,
+            id,
+          );
+        }
+      }
+      if (updatedTask.kind === TaskKind.RENDER_VIDEO) {
+        throw new Error('Not implemented yet');
+      }
+      if (updatedTask.kind === TaskKind.GENERATING_AUDIO) {
+        throw new Error('Not implemented yet');
+      }
+    }
+    return updatedTask;
   }
 
   @Delete(':id')

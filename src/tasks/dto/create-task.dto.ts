@@ -23,4 +23,7 @@ export class CreateTaskDto {
 
   @IsOptional()
   error?: string;
+
+  @IsOptional()
+  params?: Record<string, unknown>;
 }
