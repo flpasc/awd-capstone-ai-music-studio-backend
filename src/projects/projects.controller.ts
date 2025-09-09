@@ -120,6 +120,13 @@ export class ProjectsController {
     const createTaskDto: CreateTaskDto = {
       projectId,
       kind: TaskKind.CREATE_SLIDESHOW,
+      params: {
+        imageKeys,
+        audioKeys,
+        imageTimings,
+        audioTimings,
+        outputKey,
+      },
     };
     const task = await this.tasksService.create(createTaskDto);
 

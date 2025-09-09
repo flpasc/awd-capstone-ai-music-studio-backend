@@ -29,7 +29,8 @@ export class TasksService {
   // - outputVideoKey: string
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     try {
-      const { projectId, kind, status, progress, error } = createTaskDto;
+      const { projectId, kind, status, progress, error, params } =
+        createTaskDto;
 
       const project = await this.projectsRepo.findOne({
         where: { id: projectId },
@@ -47,12 +48,11 @@ export class TasksService {
         status: status || TaskStatus.PENDING,
         progress: progress || 0,
         error,
+        params,
       });
       return await this.taskRepo.save(newTask);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknow error creating task';
-      console.error(`Create task error: ${errorMessage}`);
+      console.error(`Create task error:`, error);
       throw new InternalServerErrorException(`Failed to create task`);
     }
   }
@@ -93,8 +93,16 @@ export class TasksService {
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     try {
-      await this.taskRepo.update(id, updateTaskDto);
-      return this.findOne(id);
+      // Get existing task
+      const existingTask = await this.findOne(id);
+
+      // Update the task entity with new values
+      const updatedTask = { ...existingTask, ...updateTaskDto };
+
+      // Save the updated task (this handles JSON fields properly)
+      await this.taskRepo.save(updatedTask);
+
+      return await this.taskRepo.findOneBy({ id });
     } catch (error) {
       if (
         error instanceof NotFoundException ||
