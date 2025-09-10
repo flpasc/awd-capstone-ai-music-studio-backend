@@ -61,11 +61,18 @@ export class TasksController {
         const result = updateTaskDto.result as unknown as CreateSlideshowResult;
 
         if (result?.videoKey ?? result?.videoEtag) {
+          const originalName = result.videoKey.split('/').pop() ?? 'slideshow.mp4';
+          const storageName = result.videoKey.split('/').pop();
+          if (!storageName) {
+            throw new Error(
+              `Invalid videoKey format, cannot extract file name: ${result.videoKey}`,
+            );
+          }
           const createAssetDto: CreateAssetDto = {
             userId: user.id,
             projectId: updatedTask.projectId,
-            originalName: result.videoKey.split('/').pop() ?? 'slideshow.mp4',
-            storageName: result.videoKey,
+            originalName,
+            storageName,
             metadata: {
               size: 0, // TODO: Size will be determined by storage service or by worker service
               mimetype: 'video/mp4',
