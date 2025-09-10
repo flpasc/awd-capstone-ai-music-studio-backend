@@ -21,6 +21,16 @@ export enum AssetFormat {
   UNKNOWN = 'unknown',
 }
 
+export interface UploadResult {
+  message: string;
+  filename: string;
+  originalName: string;
+  projectId: string;
+  size: number;
+  mimetype: string;
+  userId: string;
+}
+
 @Entity('asset')
 export class Asset {
   @PrimaryGeneratedColumn('uuid')
