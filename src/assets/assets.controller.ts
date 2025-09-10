@@ -32,14 +32,14 @@ export class AssetsController {
     private readonly storageService: StorageService,
   ) {}
 
-  @Post(':projectId/multiple')
+  @Post(':projectId')
   @UseInterceptors(
     FilesInterceptor(
       'files',
       // INFO: This is not a class const because ESLINT will not recognise usage in a Decorator and throw error
       Number(process.env.MINIO_MAX_SIMULTANEOUS_FILE_UPLOAD) || 10,
     ),
-  ) // Max 10 files
+  )
   async uploadMultipleFiles(
     @Param('projectId') projectId: string,
     @CurrentUser() user: SafeUser,
@@ -61,9 +61,7 @@ export class AssetsController {
   ): Promise<UploadResult[]> {
     const uploadResults: UploadResult[] = [];
 
-    // Process files sequentially to avoid overwhelming the storage service
     for (const file of files) {
-      // Generate a unique filename to avoid conflicts
       const filename = `${Date.now()}-${file.originalname}`;
       const uploadResult = await this.storageService.uploadFile(
         user.id,
