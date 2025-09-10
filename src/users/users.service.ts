@@ -10,10 +10,10 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 
-const SALT = 10;
-
 @Injectable()
 export class UsersService {
+  private readonly saltRounds = process.env.BCRYPT_SALT_ROUNDS || 12;
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -32,7 +32,10 @@ export class UsersService {
     }
 
     // HACK: Do we need/want a helper for bcrypt?
-    const hashedPassword = await bcrypt.hash(createUserDto.password, SALT);
+    const hashedPassword = await bcrypt.hash(
+      createUserDto.password,
+      this.saltRounds,
+    );
     const newUser = this.userRepo.create({
       ...createUserDto,
       password: hashedPassword,
@@ -68,7 +71,10 @@ export class UsersService {
     const user = await this.findOneById(id);
 
     if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, SALT);
+      updateUserDto.password = await bcrypt.hash(
+        updateUserDto.password,
+        this.saltRounds,
+      );
     }
 
     if (updateUserDto.email && updateUserDto.email !== user.email) {

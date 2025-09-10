@@ -30,7 +30,6 @@ export class AssetsService {
       }
 
       project.assets.push(savedAsset);
-      console.log(project, savedAsset);
       await this.projectsRepo.save(project);
 
       return savedAsset;

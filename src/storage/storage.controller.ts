@@ -8,18 +8,18 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
 import { StorageService } from './storage.service';
-
-// TODO: Move const somewhere else
-// TODO: Replace default user with user from auth
-const FILE_MAX_UPLOAD_SIZE = 20000000; // 20mb
-const DEFAULT_USER_ID = '1';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import type { SafeUser } from 'src/auth/current-user.decorator';
 
 @Controller('storage')
+@UseGuards(AuthGuard)
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
@@ -45,17 +45,20 @@ export class StorageController {
    * List all files for the current user across all projects
    */
   @Get('files')
-  async listAllUserFiles() {
-    return await this.storageService.listUserFiles(DEFAULT_USER_ID);
+  async listAllUserFiles(@CurrentUser() user: SafeUser) {
+    return await this.storageService.listUserFiles(user.id);
   }
 
   /**
    * List all files for a specific project
    */
   @Get('projects/:projectId/files')
-  async listProjectFiles(@Param('projectId') projectId: string) {
+  async listProjectFiles(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: SafeUser,
+  ) {
     const files = await this.storageService.listProjectFiles(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
     );
     return { projectId, files };
@@ -66,11 +69,12 @@ export class StorageController {
    */
   @Get('projects/:projectId/files-with-urls')
   async getProjectFilesWithUrls(
+    @CurrentUser() user: SafeUser,
     @Param('projectId') projectId: string,
     @Query('expirySeconds') expirySeconds?: number,
   ) {
     const filesWithUrls = await this.storageService.getProjectFilesWithUrls(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
       expirySeconds,
     );
@@ -82,12 +86,13 @@ export class StorageController {
    */
   @Get('projects/:projectId/files/:filename/download-url')
   async getDownloadUrl(
+    @CurrentUser() user: SafeUser,
     @Param('projectId') projectId: string,
     @Param('filename') filename: string,
     @Query('expirySeconds') expirySeconds?: number,
   ) {
     const downloadUrl = await this.storageService.getDownloadPresignedUrl(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
       filename,
       expirySeconds,
@@ -104,13 +109,14 @@ export class StorageController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('projectId') projectId: string,
+    @CurrentUser() user: SafeUser,
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
           fileType: '.(png|img|jpeg|jpg|webp|pdf|txt|doc|docx)',
         })
         .addMaxSizeValidator({
-          maxSize: FILE_MAX_UPLOAD_SIZE,
+          maxSize: Number(process.env.MINIO_FILE_UPLOAD_SIZE) || 20000000,
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -122,7 +128,7 @@ export class StorageController {
     const filename = `${Date.now()}-${file.originalname}`;
 
     const result = await this.storageService.uploadFile(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
       filename,
       file.buffer,
@@ -135,7 +141,7 @@ export class StorageController {
       projectId,
       size: file.size,
       mimetype: file.mimetype,
-      userId: DEFAULT_USER_ID,
+      userId: user.id,
     };
   }
 
@@ -144,11 +150,12 @@ export class StorageController {
    */
   @Delete('projects/:projectId/files/:filename')
   async deleteFile(
+    @CurrentUser() user: SafeUser,
     @Param('projectId') projectId: string,
     @Param('filename') filename: string,
   ) {
     const result = await this.storageService.deleteFile(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
       filename,
     );
@@ -159,9 +166,12 @@ export class StorageController {
    * Delete all files in a project
    */
   @Delete('projects/:projectId/files')
-  async deleteAllProjectFiles(@Param('projectId') projectId: string) {
+  async deleteAllProjectFiles(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: SafeUser,
+  ) {
     const result = await this.storageService.deleteAllProjectFiles(
-      DEFAULT_USER_ID,
+      user.id,
       projectId,
     );
     return { message: result, projectId };
