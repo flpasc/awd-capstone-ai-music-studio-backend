@@ -7,21 +7,21 @@ import {
   Param,
   Delete,
   UseInterceptors,
-  UploadedFile,
   HttpStatus,
   ParseFilePipeBuilder,
   UseGuards,
+  UploadedFiles,
 } from '@nestjs/common';
 import { AssetsService } from './assets.service';
 import { UpdateAssetDto } from './dto/update-asset.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
 
 import { getAssetFormat } from './helpers/asset-format.helper';
-import type { Express } from 'express';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
+import type { UploadResult } from './entities/asset.entity';
 
 @Controller('assets')
 @UseGuards(AuthGuard)
@@ -31,58 +31,65 @@ export class AssetsController {
     private readonly storageService: StorageService,
   ) {}
 
-  // TODO: Add endpoint for multi file upload
   @Post(':projectId')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
+  @UseInterceptors(
+    FilesInterceptor(
+      'files',
+      // INFO: This is not a class const because ESLINT will not recognise usage in a Decorator and throw error
+      Number(process.env.MINIO_MAX_SIMULTANEOUS_FILE_UPLOAD) || 10,
+    ),
+  )
+  async uploadMultipleFiles(
     @Param('projectId') projectId: string,
     @CurrentUser() user: SafeUser,
-    @UploadedFile(
+    @UploadedFiles(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
           fileType:
             '.(png|img|jpeg|jpg|webp|pdf|txt|doc|docx|mp3|wav|m4a|mp4|mov|webm|mpeg|wmv|mpg)',
         })
         .addMaxSizeValidator({
+          // INFO: This is not a class const because ESLINT will not recognise usage in a Decorator and throw error
           maxSize: Number(process.env.MINIO_FILE_UPLOAD_SIZE) || 20000000,
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         }),
     )
-    file: Express.Multer.File,
-  ) {
-    // Generate a unique filename to avoid conflicts
-    const filename = `${Date.now()}-${file.originalname}`;
+    files: Express.Multer.File[],
+  ): Promise<UploadResult[]> {
+    const uploadResults: UploadResult[] = [];
 
-    const uploadResult = await this.storageService.uploadFile(
-      user.id,
-      projectId,
-      filename,
-      file.buffer,
-    );
+    for (const file of files) {
+      const filename = `${Date.now()}-${file.originalname}`;
+      const uploadResult = await this.storageService.uploadFile(
+        user.id,
+        projectId,
+        filename,
+        file.buffer,
+      );
 
-    // TODO: Add asset id to return
-    const fileFormat = getAssetFormat(filename);
+      const fileFormat = getAssetFormat(filename);
+      await this.assetsService.create({
+        userId: user.id,
+        projectId,
+        originalName: file.originalname,
+        storageName: filename,
+        metadata: { size: file.size, mimetype: file.mimetype },
+        format: fileFormat,
+      });
+      uploadResults.push({
+        message: uploadResult,
+        filename,
+        originalName: file.originalname,
+        projectId,
+        size: file.size,
+        mimetype: file.mimetype,
+        userId: user.id,
+      });
+    }
 
-    await this.assetsService.create({
-      userId: user.id,
-      projectId,
-      originalName: file.originalname,
-      storageName: filename,
-      metadata: { size: file.size, mimetype: file.mimetype },
-      format: fileFormat,
-    });
-
-    return {
-      message: uploadResult,
-      filename,
-      originalName: file.originalname,
-      projectId,
-      size: file.size,
-      mimetype: file.mimetype,
-      userId: user.id,
-    };
+    return uploadResults;
   }
 
   @Get()
