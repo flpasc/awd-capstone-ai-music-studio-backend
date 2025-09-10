@@ -18,7 +18,6 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
 
 import { getAssetFormat } from './helpers/asset-format.helper';
-import type { Express } from 'express';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
