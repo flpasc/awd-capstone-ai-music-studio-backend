@@ -4,11 +4,12 @@ import { StorageUrl } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class StorageService {
-  private minioClient: Client;
-  private minioPresignedUrlClient: Client;
-
+  private readonly minioClient: Client;
+  private readonly minioPresignedUrlClient: Client;
   private readonly DEFAULT_BUCKET_NAME = 'app-assets';
-  private readonly DEFAULT_PRESIGNED_URL_EXPIRE_TIME = 3600;
+  private readonly expireTime = parseInt(
+    process.env.MINIO_PRESIGNED_URL_EXPIRE_TIME ?? '3600',
+  );
 
   // TODO: Proper error handling
   // TODO: Should i put the minio connection in a extra singleton class?
@@ -250,7 +251,7 @@ export class StorageService {
     userId: string,
     projectId: string,
     filename: string,
-    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+    expirySeconds: number = this.expireTime,
   ): Promise<string> {
     try {
       await this.initializeDefaultBucket();
@@ -297,7 +298,7 @@ export class StorageService {
     userId: string,
     projectId: string,
     filename: string,
-    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+    expirySeconds: number = this.expireTime,
   ): Promise<string> {
     try {
       const objectPath = StorageService.generateObjectPath(
@@ -322,7 +323,7 @@ export class StorageService {
   async getProjectFilesWithUrls(
     userId: string,
     projectId: string,
-    expirySeconds: number = this.DEFAULT_PRESIGNED_URL_EXPIRE_TIME,
+    expirySeconds: number = this.expireTime,
   ): Promise<StorageUrl[]> {
     try {
       const filenames = await this.listProjectFiles(userId, projectId);

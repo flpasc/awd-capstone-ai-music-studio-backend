@@ -23,8 +23,6 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
 
-const FILE_MAX_UPLOAD_SIZE = 10000000;
-
 @Controller('assets')
 @UseGuards(AuthGuard)
 export class AssetsController {
@@ -46,7 +44,7 @@ export class AssetsController {
             '.(png|img|jpeg|jpg|webp|pdf|txt|doc|docx|mp3|wav|m4a|mp4|mov|webm|mpeg|wmv|mpg)',
         })
         .addMaxSizeValidator({
-          maxSize: FILE_MAX_UPLOAD_SIZE,
+          maxSize: Number(process.env.MINIO_FILE_UPLOAD_SIZE) || 20000000,
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,

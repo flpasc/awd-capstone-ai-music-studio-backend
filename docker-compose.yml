@@ -10,16 +10,6 @@ services:
     container_name: ai-studio-backend
     ports:
       - "3001:3001"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/ai-studio
-      - MONGODB_URI=mongodb://mongo:27017/ai-studio
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_USE_SSL=false
-      - VIDEO_WORKER_URL=http://video-worker:3002
     depends_on:
       - postgres
       - minio
