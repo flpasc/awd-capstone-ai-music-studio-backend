@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
+  Res,
 } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -27,6 +30,19 @@ export class TasksController {
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
   ) {}
+
+  @Get('stream')
+  @UseGuards(AuthGuard)
+  async stream(
+    @Req() req: Request,
+    @Res() res: Response,
+    @CurrentUser() user: SafeUser,
+  ) {
+    // Get Last-Event-ID header for reconnection logic
+    const lastEventId = req.headers['last-event-id'] as string;
+    const lastUpdateDate = lastEventId ? new Date(lastEventId) : undefined;
+    await this.tasksService.handleSseConnection(user.id, res, lastUpdateDate);
+  }
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto) {

@@ -8,7 +8,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/projects/entities/project.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult, Repository, MoreThan } from 'typeorm';
+import type { Response } from 'express';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task, TaskStatus } from './entities/task.entity';
@@ -16,6 +17,8 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class TasksService {
+  private connections = new Map<string, Set<Response>>();
+  private heartbeats = new WeakMap<Response, NodeJS.Timeout>();
   constructor(
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
@@ -23,7 +26,110 @@ export class TasksService {
     private readonly projectsRepo: Repository<Project>,
     @Inject(NotificationsService)
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
+
+  async handleSseConnection(userId: string, res: Response, lastUpdate?: Date) {
+    // Set headers for SSE
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disable buffering for nginx
+    });
+    res.flushHeaders();
+
+    // save user connection
+    if (!this.connections.has(userId)) {
+      this.connections.set(userId, new Set());
+    }
+    this.connections.get(userId)?.add(res);
+
+    // Heartbeat to keep connection alive
+    const heartbeat = setInterval(() => {
+      // lines starting with ':' are comments and ignored by clients
+      res.write(': ping\n\n');
+    }, 15000);
+    this.heartbeats.set(res, heartbeat);
+
+    await this.replyUpdatedTasks(res, userId, lastUpdate);
+
+    res.on('close', () => {
+      console.log(`SSE connection closed for user ${userId}`);
+      this.connections.get(userId)?.delete(res);
+      clearInterval(heartbeat);
+      this.heartbeats.delete(res);
+      const userConnections = this.connections.get(userId);
+      if (userConnections && userConnections.size === 0) {
+        this.connections.delete(userId);
+      }
+    });
+  }
+
+  private async replyUpdatedTasks(
+    res: Response,
+    userId: string,
+    lastUpdate?: Date,
+  ): Promise<void> {
+    let where: object;
+    if (lastUpdate) {
+      where = {
+        project: { userId },
+        updatedAt: MoreThan(lastUpdate),
+      };
+    } else {
+      where = {
+        project: { userId },
+      };
+    }
+
+    const tasks = await this.taskRepo.find({
+      where,
+      relations: ['project'],
+      order: { updatedAt: 'ASC' },
+    });
+
+    for (const task of tasks) {
+      this.dispatchTaskToResponse(res, task);
+    }
+  }
+
+  private dispatchTaskToResponse(res: Response, task: Task): void {
+    const payload = {
+      id: task.id,
+      projectId: task.projectId,
+      kind: task.kind,
+      status: task.status,
+      progress: task.progress,
+      error: task.error,
+      params: task.params,
+      result: task.result,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+    };
+    res.write(`id: ${task.updatedAt.toISOString()}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  }
+
+  private async dispatchTaskUpdate(task: Task): Promise<void> {
+    // Find all users connected for this task's project
+    const taskWithProject = await this.taskRepo.findOne({
+      where: { id: task.id },
+      relations: ['project'],
+    });
+
+    if (!taskWithProject?.project?.userId) {
+      return;
+    }
+
+    const userConnections = this.connections.get(
+      taskWithProject.project.userId,
+    );
+    if (userConnections) {
+      for (const res of userConnections) {
+        this.dispatchTaskToResponse(res, task);
+      }
+    }
+  }
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     try {
@@ -138,6 +244,11 @@ export class TasksService {
       const savedTask = await this.taskRepo.save(updatedTask);
 
       const result = await this.taskRepo.findOneBy({ id });
+
+      // Dispatch task update to connected clients
+      if (result) {
+        await this.dispatchTaskUpdate(result);
+      }
 
       if (existingTask.project?.userId) {
         if (existingTask.status !== updateTaskDto.status) {
