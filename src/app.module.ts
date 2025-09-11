@@ -8,6 +8,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AssetsModule } from './assets/assets.module';
     MinioModule,
     TasksModule,
     AssetsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
