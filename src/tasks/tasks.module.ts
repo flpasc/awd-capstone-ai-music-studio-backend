@@ -8,9 +8,15 @@ import { Project } from 'src/projects/entities/project.entity';
 import { StorageService } from 'src/storage/storage.service';
 import { AssetsService } from 'src/assets/assets.service';
 import { Asset } from 'src/assets/entities/asset.entity';
+import { NotificationsModule } from 'src/notifications/notifications.module';
+import { ProjectsModule } from 'src/projects/projects.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Task, Project, Asset])],
+  imports: [
+    TypeOrmModule.forFeature([Task, Project, Asset]),
+    NotificationsModule,
+    ProjectsModule,
+  ],
   controllers: [TasksController],
   providers: [TasksService, AuthService, StorageService, AssetsService],
   exports: [TasksService],
