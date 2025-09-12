@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StorageService } from 'src/storage/storage.service';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './entities/project.entity';
@@ -142,9 +142,18 @@ export class ProjectsService {
     }
   }
 
-  async remove(id: string, userId: string): Promise<DeleteResult> {
+  async remove(id: string, userId: string): Promise<Project> {
     try {
-      return this.projectsRepo.delete({ id, userId });
+      const projectToDelete = await this.projectsRepo.findOne({
+        where: { id, userId },
+        relations: ['tasks', 'assets'],
+      });
+
+      if (!projectToDelete) {
+        throw new NotFoundException(`Project with the id: ${id} not found`);
+      }
+
+      return this.projectsRepo.remove(projectToDelete);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
