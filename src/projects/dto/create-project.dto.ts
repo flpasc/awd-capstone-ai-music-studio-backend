@@ -1,10 +1,9 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { createZodDto } from 'nestjs-zod';
+import z from 'zod';
 
-export class CreateProjectDto {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+export const CreateProjectSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500),
+});
 
-  @IsString()
-  description: string;
-}
+export class CreateProjectDto extends createZodDto(CreateProjectSchema) {}

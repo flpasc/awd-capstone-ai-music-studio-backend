@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { Task } from 'src/tasks/entities/task.entity';
 
-const createSlideshowSchema = z
+export const CreateSlideshowSchema = z
   .object({
     imageIds: z.array(z.string()),
     imageTimings: z.array(z.number().min(1)).optional(),
@@ -23,22 +23,22 @@ const createSlideshowSchema = z
   })
   .refine(
     (data) =>
-      data.imageTimings && data.imageIds.length === data.imageTimings.length,
+      !data.imageTimings || data.imageIds.length === data.imageTimings.length,
     {
-      message: 'imageIIds and imageTimings must have the same length',
+      message: 'imageIds and imageTimings must have the same length',
       path: ['imageTimings'],
     },
   )
   .refine(
     (data) =>
-      data.audioTimings && data.audioIds.length === data.audioTimings.length,
+      !data.audioTimings || data.audioIds.length === data.audioTimings.length,
     {
-      message: 'audioIDs and audioTimings must have the same length',
+      message: 'audioIds and audioTimings must have the same length',
       path: ['audioTimings'],
     },
   );
 
-export class CreateSlideshowDto extends createZodDto(createSlideshowSchema) {
+export class CreateSlideshowDto extends createZodDto(CreateSlideshowSchema) {
   // @IsNotEmpty()
   // @IsString()
   // name: string;
