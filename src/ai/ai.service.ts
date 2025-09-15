@@ -13,9 +13,11 @@ export class AiService {
   async generateAudio(args: {
     projectId: string;
     prompt: string;
+    lyricsPrompt: string;
     userId: string;
   }) {
-    const { projectId, prompt, userId } = args;
+    const { projectId, prompt, lyricsPrompt, userId } = args;
+    console.log(prompt, lyricsPrompt);
     const result = await fal.subscribe('fal-ai/minimax-music/v1.5', {
       input: {
         prompt: `[verse]
@@ -27,7 +29,7 @@ export class AiService {
 
         Fast inference power, we'll never fail.
       ##`,
-        lyrics_prompt: `${prompt}`,
+        lyrics_prompt: `${lyricsPrompt}`,
       },
       logs: true,
       onQueueUpdate: (update) => {

@@ -11,12 +11,12 @@ export class AiController {
   generateAudio(
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
-    @Body() body: { prompt: string },
+    @Body() body: { prompt: string; lyricsPrompt: string },
   ) {
     return this.aiService.generateAudio({
       projectId,
-      prompt: body.prompt,
       userId: user.id,
+      ...body,
     });
   }
 }
