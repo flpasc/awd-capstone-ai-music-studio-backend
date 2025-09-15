@@ -97,6 +97,7 @@ export class TasksController {
             metadata: {
               size: 0, // TODO: Size will be determined by storage service or by worker service
               mimetype: 'video/mp4',
+              fileType: 'video',
             },
             format: getAssetFormat(result.videoKey),
           };

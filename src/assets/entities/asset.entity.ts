@@ -12,6 +12,8 @@ import { z } from 'zod';
 export const AssetMetadataSchema = z.object({
   size: z.number().positive(),
   mimetype: z.string().min(1),
+  fileType: z.enum(['video', 'audio', 'image', 'unknown']),
+  duration: z.number().optional(),
 });
 
 export type AssetMetadata = z.infer<typeof AssetMetadataSchema>;

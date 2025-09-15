@@ -18,12 +18,14 @@ import { UpdateAssetSchema } from './dto/update-asset.dto';
 import type { UpdateAssetDto } from './dto/update-asset.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
+import { MediaService } from 'src/media/media.service';
 
 import { getAssetFormat } from './helpers/asset-format.helper';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
 import type { UploadResult } from './entities/asset.entity';
+import { AssetFormat, type AssetMetadata } from './entities/asset.entity';
 
 @Controller('assets')
 @UseGuards(AuthGuard)
@@ -31,6 +33,7 @@ export class AssetsController {
   constructor(
     private readonly assetsService: AssetsService,
     private readonly storageService: StorageService,
+    private readonly mediaService: MediaService,
   ) {}
 
   @Post(':projectId')
@@ -71,15 +74,50 @@ export class AssetsController {
         file.buffer,
       );
 
+      // Get basic file format
       const fileFormat = getAssetFormat(filename);
+
+      // Prepare base metadata with proper typing
+      let metadata: AssetMetadata = {
+        size: file.size,
+        mimetype: file.mimetype,
+        fileType: 'unknown',
+        duration: undefined,
+      };
+
+      // For media files (audio/video), analyze with MediaService
+      if (
+        fileFormat === AssetFormat.AUDIO ||
+        fileFormat === AssetFormat.VIDEO
+      ) {
+        try {
+          // Analyze media file
+          const mediaInfo = await this.mediaService.getBasicMediaInfoFromBuffer(
+            file.buffer,
+          );
+
+          // Update metadata with media analysis results
+          metadata = {
+            ...metadata,
+            fileType: mediaInfo.fileType ?? 'unknown',
+            duration: mediaInfo.duration > 0 ? mediaInfo.duration : undefined,
+          };
+        } catch (error) {
+          console.error('Error analyzing media file:', error);
+          // metadata is already set with fallback values
+        }
+      }
+
+      // Create asset record
       await this.assetsService.create({
         userId: user.id,
         projectId,
         originalName: file.originalname,
         storageName: filename,
-        metadata: { size: file.size, mimetype: file.mimetype },
+        metadata,
         format: fileFormat,
       });
+
       uploadResults.push({
         message: uploadResult,
         filename,

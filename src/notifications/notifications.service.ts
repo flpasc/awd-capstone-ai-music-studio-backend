@@ -11,7 +11,7 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-  ) { }
+  ) {}
 
   async handleSseConnection(userId: string, res: Response, lastUpdate?: Date) {
     // Set headers for SSE

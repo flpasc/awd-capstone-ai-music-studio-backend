@@ -9,10 +9,10 @@ import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MediaService } from './media/media.service';
 
 @Module({
   imports: [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -31,6 +31,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MediaService],
 })
 export class AppModule {}
