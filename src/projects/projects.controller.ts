@@ -216,7 +216,13 @@ export class ProjectsController {
       status,
       progress,
     };
-    if (error) updateTaskDto = { ...updateTaskDto, error };
+    if (error) {
+      updateTaskDto = { ...updateTaskDto, error };
+
+      if (!updateTaskDto.result) {
+        delete updateTaskDto.result;
+      }
+    }
 
     await this.tasksService.update(task.id, updateTaskDto);
 
