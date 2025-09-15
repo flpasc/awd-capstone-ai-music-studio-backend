@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AssetsModule } from 'src/assets/assets.module';
+import { AuthService } from 'src/auth/auth.service';
 import { MinioModule } from 'src/storage/storage.module';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
@@ -7,7 +8,7 @@ import { AiService } from './ai.service';
 @Module({
   imports: [AssetsModule, MinioModule],
   controllers: [AiController],
-  providers: [AiService],
+  providers: [AiService, AuthService],
   exports: [AiService],
 })
-export class AiModule { }
+export class AiModule {}
