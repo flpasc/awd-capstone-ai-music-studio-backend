@@ -9,16 +9,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
+import { CreateTaskSchema, type CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskSchema, type UpdateTaskDto } from './dto/update-task.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
 import type { SafeUser } from 'src/auth/current-user.decorator';
 import { TaskKind, TaskStatus } from './entities/task.entity';
 import { AssetsService } from 'src/assets/assets.service';
 import type { CreateSlideshowResult } from './entities/task.entity';
-import { CreateAssetDto } from 'src/assets/dto/create-asset.dto';
+import type { CreateAssetDto } from 'src/assets/dto/create-asset.dto';
 import { getAssetFormat } from 'src/assets/helpers/asset-format.helper';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
 @Controller('tasks')
 @UseGuards(AuthGuard)
@@ -29,7 +30,9 @@ export class TasksController {
   ) {}
 
   @Post()
-  create(@Body() createTaskDto: CreateTaskDto) {
+  create(
+    @Body(new ZodValidationPipe(CreateTaskSchema)) createTaskDto: CreateTaskDto,
+  ) {
     return this.tasksService.create(createTaskDto);
   }
 
@@ -48,7 +51,8 @@ export class TasksController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateTaskDto: UpdateTaskDto,
+    @Body(new ZodValidationPipe(UpdateTaskSchema))
+    updateTaskDto: UpdateTaskDto,
     @CurrentUser() user: SafeUser,
   ) {
     console.log('Webhook received for task:', id, 'payload:', updateTaskDto);
@@ -61,7 +65,8 @@ export class TasksController {
         const result = updateTaskDto.result as unknown as CreateSlideshowResult;
 
         if (result?.videoKey ?? result?.videoEtag) {
-          const originalName = result.videoKey.split('/').pop() ?? 'slideshow.mp4';
+          const originalName =
+            result.videoKey.split('/').pop() ?? 'slideshow.mp4';
           const storageName = result.videoKey.split('/').pop();
           if (!storageName) {
             throw new Error(
