@@ -9,20 +9,14 @@ import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MediaService } from './media/media.service';
-<<<<<<< HEAD
-import { config } from './config';
-=======
->>>>>>> c0b02bf (feat: enhance media handling with MediaService and update asset metadata)
 import { AiModule } from './ai/ai.module';
+import { config } from './config';
 
 @Module({
   imports: [
-<<<<<<< HEAD
-=======
     ConfigModule.forRoot({
       isGlobal: true,
     }),
->>>>>>> c0b02bf (feat: enhance media handling with MediaService and update asset metadata)
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: config.DB_URL,
