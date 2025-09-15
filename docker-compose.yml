@@ -3,6 +3,9 @@
 
 services:
   backend:
+    env_file:
+      - .env
+      - ${OPTIONAL_ENV_FILE:-/dev/null}
     build:
       context: .
       dockerfile: Dockerfile

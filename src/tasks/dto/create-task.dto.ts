@@ -15,7 +15,7 @@ export const CreateTaskSchema = z.object({
     })
     .optional(),
   params: z.record(z.string(), z.unknown()).optional(),
-  result: z.record(z.string(), z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export class CreateTaskDto extends createZodDto(CreateTaskSchema) {}

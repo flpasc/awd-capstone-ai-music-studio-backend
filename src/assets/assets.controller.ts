@@ -23,6 +23,7 @@ import { MediaService } from 'src/media/media.service';
 import { getAssetFormat } from './helpers/asset-format.helper';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
+import { config } from '../config';
 import type { SafeUser } from 'src/auth/current-user.decorator';
 import type { UploadResult } from './entities/asset.entity';
 import { AssetFormat, type AssetMetadata } from './entities/asset.entity';
@@ -41,7 +42,7 @@ export class AssetsController {
     FilesInterceptor(
       'files',
       // INFO: This is not a class const because ESLINT will not recognise usage in a Decorator and throw error
-      Number(process.env.MINIO_MAX_SIMULTANEOUS_FILE_UPLOAD) || 10,
+      config.MINIO_MAX_SIMULTANEOUS_FILE_UPLOAD,
     ),
   )
   async uploadMultipleFiles(
@@ -55,7 +56,7 @@ export class AssetsController {
         })
         .addMaxSizeValidator({
           // INFO: This is not a class const because ESLINT will not recognise usage in a Decorator and throw error
-          maxSize: Number(process.env.MINIO_FILE_UPLOAD_SIZE) || 20000000,
+          maxSize: config.MINIO_FILE_UPLOAD_SIZE,
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
