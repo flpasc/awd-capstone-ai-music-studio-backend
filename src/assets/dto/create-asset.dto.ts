@@ -1,26 +1,14 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { Column } from 'typeorm';
-import type { AssetFormat, AssetMetadata } from '../entities/asset.entity';
+import { createZodDto } from 'nestjs-zod';
+import { AssetFormat, AssetMetadataSchema } from '../entities/asset.entity';
+import { z } from 'zod';
 
-export class CreateAssetDto {
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
+export const CreateAssetSchema = z.object({
+  userId: z.string().min(1),
+  originalName: z.string().min(1),
+  storageName: z.string().min(1),
+  projectId: z.string().uuid(),
+  metadata: AssetMetadataSchema,
+  format: z.nativeEnum(AssetFormat),
+});
 
-  @IsString()
-  @IsNotEmpty()
-  originalName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  storageName: string;
-
-  @Column()
-  projectId: string;
-
-  @Column()
-  metadata: AssetMetadata;
-
-  @Column()
-  format: AssetFormat;
-}
+export class CreateAssetDto extends createZodDto(CreateAssetSchema) {}

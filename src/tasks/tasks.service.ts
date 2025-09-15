@@ -241,6 +241,7 @@ export class TasksService {
       }
 
       const updatedTask = { ...existingTask, ...updateTaskDto };
+
       const savedTask = await this.taskRepo.save(updatedTask);
 
       const result = await this.taskRepo.findOneBy({ id });

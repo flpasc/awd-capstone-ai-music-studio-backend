@@ -1,11 +1,5 @@
-import { PartialType, PickType } from '@nestjs/mapped-types';
-import { CreateTaskDto } from './create-task.dto';
-import { IsOptional } from 'class-validator';
+import { createZodDto } from 'nestjs-zod';
+import { CreateTaskSchema } from './create-task.dto';
 
-export class UpdateTaskDto extends PartialType(
-  PickType(CreateTaskDto, ['kind', 'status', 'progress', 'error'] as const),
-) {
-  // You can add additional fields here if needed
-  @IsOptional()
-  result?: Record<string, unknown>;
-}
+export const UpdateTaskSchema = CreateTaskSchema.partial();
+export class UpdateTaskDto extends createZodDto(UpdateTaskSchema) {}

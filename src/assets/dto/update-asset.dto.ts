@@ -1,4 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAssetDto } from './create-asset.dto';
+import { createZodDto } from 'nestjs-zod';
+import { CreateAssetSchema } from './create-asset.dto';
 
-export class UpdateAssetDto extends PartialType(CreateAssetDto) {}
+export const UpdateAssetSchema = CreateAssetSchema.partial();
+export class UpdateAssetDto extends createZodDto(UpdateAssetSchema) {}

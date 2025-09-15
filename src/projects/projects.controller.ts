@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { AssetsService } from 'src/assets/assets.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import type { SafeUser } from 'src/auth/current-user.decorator';
@@ -17,13 +18,16 @@ import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { UpdateTaskDto } from 'src/tasks/dto/update-task.dto';
 import { TaskKind, TaskStatus } from 'src/tasks/entities/task.entity';
 import { TasksService } from 'src/tasks/tasks.service';
-import { CreateProjectDto } from './dto/create-project.dto';
+import type { CreateProjectDto } from './dto/create-project.dto';
+import type { CreateSlideshowDto } from './dto/create-slideshow.dto';
+import { CreateProjectSchema } from './dto/create-project.dto';
+import { CreateSlideshowSchema } from './dto/create-slideshow.dto';
 import {
-  CreateSlideshowDto,
   CreateSlideshowResponseDto,
   createSlideshowWorkerResponseDtoSchema,
 } from './dto/create-slideshow.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
+import type { UpdateProjectDto } from './dto/update-project.dto';
+import { UpdateProjectSchema } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
 
 @Controller('projects')
@@ -38,7 +42,8 @@ export class ProjectsController {
   @Post()
   create(
     @CurrentUser() user: SafeUser,
-    @Body() createProjectDto: CreateProjectDto,
+    @Body(new ZodValidationPipe(CreateProjectSchema))
+    createProjectDto: CreateProjectDto,
   ) {
     return this.projectsService.create(createProjectDto, user.id);
   }
@@ -58,7 +63,8 @@ export class ProjectsController {
   update(
     @CurrentUser() user: SafeUser,
     @Param('id') id: string,
-    @Body() updateProjectDto: UpdateProjectDto,
+    @Body(new ZodValidationPipe(UpdateProjectSchema))
+    updateProjectDto: UpdateProjectDto,
   ) {
     return this.projectsService.update(id, user.id, updateProjectDto);
   }
@@ -72,7 +78,8 @@ export class ProjectsController {
   async createSlideshow(
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
-    @Body() createSlideshowDto: CreateSlideshowDto,
+    @Body(new ZodValidationPipe(CreateSlideshowSchema))
+    createSlideshowDto: CreateSlideshowDto,
   ): Promise<CreateSlideshowResponseDto> {
     const userId = user.id;
 
@@ -209,7 +216,13 @@ export class ProjectsController {
       status,
       progress,
     };
-    if (error) updateTaskDto = { ...updateTaskDto, error };
+    if (error) {
+      updateTaskDto = { ...updateTaskDto, error };
+
+      if (!updateTaskDto.result) {
+        delete updateTaskDto.result;
+      }
+    }
 
     await this.tasksService.update(task.id, updateTaskDto);
 

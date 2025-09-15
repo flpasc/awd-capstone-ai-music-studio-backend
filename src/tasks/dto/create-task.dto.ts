@@ -1,29 +1,21 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { createZodDto } from 'nestjs-zod';
 import { TaskKind, TaskStatus } from '../entities/task.entity';
+import z from 'zod';
 
-export class CreateTaskDto {
-  @IsOptional()
-  @IsUUID()
-  id?: string;
+export const CreateTaskSchema = z.object({
+  projectId: z.string().uuid(),
+  kind: z.enum(TaskKind),
+  status: z.enum(TaskStatus).optional(),
+  progress: z.number().min(0).max(100).optional(),
+  error: z
+    .string()
+    .nullish()
+    .transform((value) => {
+      return value ?? undefined;
+    })
+    .optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).optional(),
+});
 
-  @IsNotEmpty()
-  @IsUUID()
-  projectId: string;
-
-  @IsNotEmpty()
-  @IsEnum(TaskKind)
-  kind: TaskKind;
-
-  @IsOptional()
-  @IsEnum(TaskStatus)
-  status?: TaskStatus;
-
-  @IsOptional()
-  progress?: number;
-
-  @IsOptional()
-  error?: string;
-
-  @IsOptional()
-  params?: Record<string, unknown>;
-}
+export class CreateTaskDto extends createZodDto(CreateTaskSchema) {}

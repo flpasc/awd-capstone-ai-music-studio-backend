@@ -12,8 +12,10 @@ import {
   UseGuards,
   UploadedFiles,
 } from '@nestjs/common';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { AssetsService } from './assets.service';
-import { UpdateAssetDto } from './dto/update-asset.dto';
+import { UpdateAssetSchema } from './dto/update-asset.dto';
+import type { UpdateAssetDto } from './dto/update-asset.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from 'src/storage/storage.service';
 
@@ -99,16 +101,20 @@ export class AssetsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.assetsService.findOne(+id);
+    return this.assetsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAssetDto: UpdateAssetDto) {
-    return this.assetsService.update(+id, updateAssetDto);
+  update(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateAssetSchema))
+    updateAssetDto: UpdateAssetDto,
+  ) {
+    return this.assetsService.update(id, updateAssetDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.assetsService.remove(+id);
+    return this.assetsService.remove(id);
   }
 }

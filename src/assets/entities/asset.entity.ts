@@ -7,11 +7,14 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { z } from 'zod';
 
-export interface AssetMetadata {
-  size: number;
-  mimetype: string;
-}
+export const AssetMetadataSchema = z.object({
+  size: z.number().positive(),
+  mimetype: z.string().min(1),
+});
+
+export type AssetMetadata = z.infer<typeof AssetMetadataSchema>;
 
 export enum AssetFormat {
   AUDIO = 'audio',
