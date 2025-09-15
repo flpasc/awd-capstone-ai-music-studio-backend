@@ -47,16 +47,16 @@ export class AssetsService {
     return `This action returns all assets`;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} asset`;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(id: number, updateAssetDto: UpdateAssetDto) {
+  update(id: string, updateAssetDto: UpdateAssetDto) {
     return `This action updates a #${id} asset`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} asset`;
   }
 
