@@ -9,9 +9,11 @@ import { StorageService } from 'src/storage/storage.service';
 import { AssetsService } from 'src/assets/assets.service';
 import { Asset } from 'src/assets/entities/asset.entity';
 import { AuthService } from 'src/auth/auth.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { Notification } from 'src/notifications/notification.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Project, Task, Asset])],
+  imports: [TypeOrmModule.forFeature([Project, Task, Asset, Notification])],
   controllers: [ProjectsController],
   providers: [
     ProjectsService,
@@ -19,6 +21,7 @@ import { AuthService } from 'src/auth/auth.service';
     StorageService,
     AssetsService,
     AuthService,
+    NotificationsService,
   ],
   exports: [ProjectsService],
 })
