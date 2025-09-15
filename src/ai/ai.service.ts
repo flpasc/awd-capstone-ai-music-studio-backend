@@ -36,9 +36,6 @@ export class AiService {
         }
       },
     });
-    console.log(result.data);
-    console.log(result.requestId);
-
     const audioSchema = z.object({
       audio: z.object({
         url: z.string(),
@@ -49,6 +46,11 @@ export class AiService {
     });
     const parsedData = audioSchema.parse(result.data);
     const audioResponse = await fetch(parsedData.audio.url);
+    if (!audioResponse.ok) {
+      throw new Error(
+        `Failed to fetch generated audio file: ${audioResponse.statusText}`,
+      );
+    }
     const audioBuffer = await audioResponse.arrayBuffer();
     await this.storageService.uploadFile(
       userId,
