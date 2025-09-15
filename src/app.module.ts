@@ -10,6 +10,7 @@ import { AssetsModule } from './assets/assets.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MediaService } from './media/media.service';
 import { config } from './config';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { config } from './config';
     TasksModule,
     AssetsModule,
     NotificationsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService, MediaService],

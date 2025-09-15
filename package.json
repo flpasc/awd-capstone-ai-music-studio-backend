@@ -28,6 +28,7 @@
     "modules:update": "docker compose ps -q backend | grep -q . && npm run modules:update:running || npm run modules:update:stopped"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.6.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
