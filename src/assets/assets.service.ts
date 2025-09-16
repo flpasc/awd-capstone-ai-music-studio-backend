@@ -47,8 +47,8 @@ export class AssetsService {
     return `This action returns all assets`;
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} asset`;
+  async findOne(id: string): Promise<Asset | null> {
+    return this.assetsRepo.findOneBy({ id });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

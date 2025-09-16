@@ -59,6 +59,37 @@ export class StorageService {
   }
 
   /**
+   * Get file content as Buffer
+   */
+  async getFile(
+    userId: string,
+    projectId: string,
+    filename: string,
+  ): Promise<Buffer> {
+    try {
+      const objectPath = StorageService.generateObjectPath(
+        userId,
+        projectId,
+        filename,
+      );
+
+      const stream = await this.minioClient.getObject(
+        this.DEFAULT_BUCKET_NAME,
+        objectPath,
+      );
+
+      const chunks: Buffer[] = [];
+      return new Promise((resolve, reject) => {
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+      });
+    } catch (error) {
+      throw new Error(`Failed to get file: ${error}`);
+    }
+  }
+
+  /**
    * Create a new bucket if bucket with name doesent exist
    */
   async createBucket(bucketName: string): Promise<string> {
