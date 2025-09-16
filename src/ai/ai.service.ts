@@ -1,11 +1,11 @@
 import { fal } from '@fal-ai/client';
 import { Injectable } from '@nestjs/common';
+import { Buffer } from 'buffer';
 import { AssetsService } from 'src/assets/assets.service';
 import { AssetFormat } from 'src/assets/entities/asset.entity';
-import { StorageService } from 'src/storage/storage.service';
-import { Buffer } from 'buffer';
-import { z } from 'zod';
 import { config } from 'src/config';
+import { StorageService } from 'src/storage/storage.service';
+import { z } from 'zod';
 
 @Injectable()
 export class AiService {
@@ -28,15 +28,7 @@ export class AiService {
     console.log(prompt, lyricsPrompt);
     const result = await fal.subscribe('fal-ai/minimax-music/v1.5', {
       input: {
-        prompt: `[verse]
-       Fast and Limitless
-       In the heart of the code, where dreams collide,
-
-        FAL's the name, taking tech for a ride.
-      Generative media, blazing the trail,
-
-        Fast inference power, we'll never fail.
-      ##`,
+        prompt: prompt,
         lyrics_prompt: `${lyricsPrompt}`,
       },
       logs: true,
@@ -69,7 +61,7 @@ export class AiService {
       Buffer.from(audioBuffer),
     );
 
-    await this.assetsService.create({
+    const asset = await this.assetsService.create({
       userId: userId,
       projectId,
       originalName: parsedData.audio.file_name,
@@ -80,7 +72,17 @@ export class AiService {
       },
       format: AssetFormat.AUDIO,
     });
-    return audioBuffer;
+
+    const url = await this.storageService.getDownloadPresignedUrl(
+      userId,
+      projectId,
+      parsedData.audio.file_name,
+    );
+
+    return {
+      ...asset,
+      downloadUrl: url,
+    };
   }
 
   // TODO: Add type for body
@@ -139,6 +141,7 @@ export class AiService {
         `You will be given ${imageAssetIds.length} images in order. Generate song lyrics for a ${trackLengthSeconds}-second track.`,
         '',
         'STRICT INSTRUCTIONS:',
+        '- Limit output to 600 characters.',
         '- Return ONLY plain text lyrics. NO JSON, NO timestamps, NO code blocks, NO formatting markers.',
         `- Divide the song equally among the ${imageAssetIds.length} images. Each image should inspire about ${secondsPerImage} seconds of lyrics.`,
         '- Follow the image order provided. Write lyrics inspired by image 1 first, then image 2, etc.',

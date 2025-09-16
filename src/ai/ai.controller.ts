@@ -17,7 +17,8 @@ export class AiController {
     return this.aiService.generateAudio({
       projectId,
       userId: user.id,
-      ...body,
+      prompt: body.prompt,
+      lyricsPrompt: body.lyricsPrompt,
     });
   }
 
@@ -31,7 +32,7 @@ export class AiController {
     return this.aiService.generateLyrics({
       projectId,
       userId: user.id,
-      ...body,
+      imageAssetIds: body.imageAssetIds,
     });
   }
 }

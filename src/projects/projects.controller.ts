@@ -38,7 +38,7 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) { }
+  ) {}
 
   @Post()
   create(
