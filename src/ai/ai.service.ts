@@ -17,7 +17,7 @@ export class AiService {
   constructor(
     private readonly storageService: StorageService,
     private readonly assetsService: AssetsService,
-  ) {}
+  ) { }
   async generateAudio(args: {
     projectId: string;
     prompt: string;
@@ -53,11 +53,12 @@ export class AiService {
         `Failed to fetch generated audio file: ${audioResponse.statusText}`,
       );
     }
+    const filename = `${new Date().getTime()}-${parsedData.audio.file_name}`;
     const audioBuffer = await audioResponse.arrayBuffer();
     await this.storageService.uploadFile(
       userId,
       projectId,
-      parsedData.audio.file_name,
+      filename,
       Buffer.from(audioBuffer),
     );
 
@@ -65,7 +66,7 @@ export class AiService {
       userId: userId,
       projectId,
       originalName: parsedData.audio.file_name,
-      storageName: parsedData.audio.file_name,
+      storageName: filename,
       metadata: {
         size: parsedData.audio.file_size,
         mimetype: parsedData.audio.content_type,
@@ -76,7 +77,7 @@ export class AiService {
     const url = await this.storageService.getDownloadPresignedUrl(
       userId,
       projectId,
-      parsedData.audio.file_name,
+      filename,
     );
 
     return {
