@@ -1,0 +1,72 @@
+# backend/docker-compose.yml
+# version: '3.8'
+
+services:
+  backend:
+    env_file:
+      - .env.production
+      - .env.production.local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ai-studio-backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      # - minio
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+      - backend_dist_data:/app/dist
+      - backend_tmp:/app/tmp
+    networks:
+      - backend-network
+    extra_hosts:
+      - "localhost:host-gateway"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=ai-studio
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - ./postgresql-init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: minio-storage
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     - MINIO_ROOT_USER=minioadmin
+  #     - MINIO_ROOT_PASSWORD=minioadmin
+  #   ports:
+  #     - "9000:9000"  # API
+  #     - "9001:9001"  # Console
+  #   volumes:
+  #     - minio_data:/data
+  #   networks:
+  #     - backend-network
+  #   restart: unless-stopped
+
+networks:
+  backend-network:
+    name: ai-studio-shared-network
+    external: true
+    driver: bridge
+
+volumes:
+  backend_node_modules:
+  backend_dist_data:
+  backend_tmp:
+  postgres_data:
+  minio_data:
