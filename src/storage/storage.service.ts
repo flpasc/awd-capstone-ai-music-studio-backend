@@ -1,33 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { BucketItem, Client } from 'minio';
 import { StorageUrl } from 'src/projects/entities/project.entity';
+import { config } from '../config';
 
 @Injectable()
 export class StorageService {
   private readonly minioClient: Client;
   private readonly minioPresignedUrlClient: Client;
   private readonly DEFAULT_BUCKET_NAME = 'app-assets';
-  private readonly expireTime = parseInt(
-    process.env.MINIO_PRESIGNED_URL_EXPIRE_TIME ?? '3600',
-  );
+  private readonly expireTime = config.MINIO_PRESIGNED_URL_EXPIRE_TIME;
 
   // TODO: Proper error handling
   // TODO: Should i put the minio connection in a extra singleton class?
   constructor() {
     this.minioClient = new Client({
-      endPoint: process.env.MINIO_ENDPOINT || 'minio',
-      port: parseInt(process.env.MINIO_PORT || '9000'),
-      useSSL: process.env.MINIO_SSL === 'true',
-      accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-      secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+      endPoint: config.MINIO_ENDPOINT,
+      port: config.MINIO_PORT,
+      useSSL: config.MINIO_SSL,
+      accessKey: config.MINIO_ACCESSKEY,
+      secretKey: config.MINIO_SECRETKEY,
     });
 
     this.minioPresignedUrlClient = new Client({
       endPoint: 'localhost',
-      port: parseInt(process.env.MINIO_PORT || '9000'),
-      useSSL: process.env.MINIO_SSL === 'true',
-      accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-      secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+      port: config.MINIO_PORT,
+      useSSL: config.MINIO_SSL,
+      accessKey: config.MINIO_ACCESSKEY,
+      secretKey: config.MINIO_SECRETKEY,
     });
   }
 

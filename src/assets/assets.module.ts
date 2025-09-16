@@ -7,11 +7,18 @@ import { StorageService } from 'src/storage/storage.service';
 import { ProjectsService } from 'src/projects/projects.service';
 import { Project } from 'src/projects/entities/project.entity';
 import { AuthService } from 'src/auth/auth.service';
+import { MediaService } from 'src/media/media.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Asset, Project])],
   controllers: [AssetsController],
-  providers: [AssetsService, StorageService, ProjectsService, AuthService],
+  providers: [
+    AssetsService,
+    StorageService,
+    ProjectsService,
+    AuthService,
+    MediaService,
+  ],
   exports: [AssetsService],
 })
 export class AssetsModule {}
