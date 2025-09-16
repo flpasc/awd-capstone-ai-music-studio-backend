@@ -38,7 +38,7 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) { }
+  ) {}
 
   @Post()
   create(
@@ -113,12 +113,14 @@ export class ProjectsController {
     }
 
     const audioTimings =
-      createSlideshowDto.audioTimings ?? audios.map((audio) => audio.metadata?.duration ?? 5);
+      createSlideshowDto.audioTimings ??
+      audios.map((audio) => audio.metadata?.duration ?? 5);
     const totalAudioDuration = audioTimings.reduce((a, b) => a + b, 0);
     // if imageTimings not provided, divide total audio duration by number of images
     // e.g. if total audio duration is 60s and we have 3 images, each image will be shown for 20s
     const imageTimings =
-      createSlideshowDto.imageTimings ?? imageKeys.map((v) => {
+      createSlideshowDto.imageTimings ??
+      imageKeys.map(() => {
         return totalAudioDuration / imageKeys.length;
       });
 
