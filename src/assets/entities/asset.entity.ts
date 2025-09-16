@@ -12,7 +12,7 @@ import { z } from 'zod';
 export const AssetMetadataSchema = z.object({
   size: z.number().positive(),
   mimetype: z.string().min(1),
-  fileType: z.enum(['video', 'audio', 'image', 'unknown']),
+  fileType: z.enum(['video', 'audio', 'image', 'unknown']).optional(),
   duration: z.number().optional(),
 });
 

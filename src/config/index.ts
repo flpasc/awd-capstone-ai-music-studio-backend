@@ -54,6 +54,9 @@ const configSchema = z.object({
 
   // CORS (frontend URL)
   CORS_ORIGIN: z.string(),
+
+  // 3rd Party API Keys (optional)
+  FAL_KEY: z.string(),
 });
 
 // Validate environment variables on module load
