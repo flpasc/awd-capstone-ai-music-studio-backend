@@ -192,39 +192,6 @@ export class StorageService {
   }
 
   /**
-   * Lists all project generations
-   */
-  async listProjectGenerations(
-    userId: string,
-    projectId: string,
-  ): Promise<string[]> {
-    try {
-      await this.initializeDefaultBucket();
-      const prefix = `${userId}/${projectId}/generations/`;
-      const objects: string[] = [];
-      const stream = this.minioClient.listObjectsV2(
-        this.DEFAULT_BUCKET_NAME,
-        prefix,
-        true,
-        '',
-      );
-
-      return new Promise((resolve, reject) => {
-        stream.on('data', (obj: BucketItem) => {
-          if (obj.name) {
-            const filename = obj.name.replace(prefix, '');
-            objects.push(filename);
-          }
-        });
-        stream.on('error', reject);
-        stream.on('end', () => resolve(objects));
-      });
-    } catch (error) {
-      throw new Error(`Failed to list project: ${projectId} files: ${error}`);
-    }
-  }
-
-  /**
    * Upload a file to a given project
    */
   async uploadFile(
@@ -270,34 +237,6 @@ export class StorageService {
       return `File deleted successfully: ${objectPath}`;
     } catch (error) {
       throw new Error(`Delete failed: ${error}`);
-    }
-  }
-
-  /**
-   * Generate a presigned upload url
-   * used by worker for generated video upload
-   */
-  async getUploadPresignedUrl(
-    userId: string,
-    projectId: string,
-    filename: string,
-    expirySeconds: number = this.expireTime,
-  ): Promise<string> {
-    try {
-      await this.initializeDefaultBucket();
-      const objectPath = StorageService.generateObjectPath(
-        userId,
-        projectId,
-        filename,
-      );
-
-      return await this.minioClient.presignedPutObject(
-        this.DEFAULT_BUCKET_NAME,
-        objectPath,
-        expirySeconds,
-      );
-    } catch (error) {
-      throw new Error(`Failed to generate upload URL: ${error}`);
     }
   }
 
