@@ -29,6 +29,7 @@ import {
 import type { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateProjectSchema } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
+import { config } from '../config';
 
 @Controller('projects')
 @UseGuards(AuthGuard)
@@ -37,7 +38,7 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly assetsService: AssetsService,
-  ) {}
+  ) { }
 
   @Post()
   create(
@@ -111,10 +112,17 @@ export class ProjectsController {
       );
     }
 
-    const imageTimings =
-      createSlideshowDto.imageTimings ?? imageKeys.map(() => 5);
     const audioTimings =
-      createSlideshowDto.audioTimings ?? audioKeys.map(() => 5);
+      createSlideshowDto.audioTimings ??
+      audios.map((audio) => audio.metadata?.duration ?? 5);
+    const totalAudioDuration = audioTimings.reduce((a, b) => a + b, 0);
+    // if imageTimings not provided, divide total audio duration by number of images
+    // e.g. if total audio duration is 60s and we have 3 images, each image will be shown for 20s
+    const imageTimings =
+      createSlideshowDto.imageTimings ??
+      imageKeys.map(() => {
+        return totalAudioDuration / imageKeys.length;
+      });
 
     // TODO: create function to get output video key
     const outputKey = StorageService.generateObjectPath(
@@ -149,7 +157,7 @@ export class ProjectsController {
     let slideshowResponse: Response;
     try {
       slideshowResponse = await fetch(
-        `${process.env.VIDEO_WORKER_URL}/tasks/${task.id}`,
+        `${config.VIDEO_WORKER_URL}/tasks/${task.id}`,
         {
           method: 'POST',
           headers: {

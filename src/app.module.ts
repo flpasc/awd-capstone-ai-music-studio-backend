@@ -9,20 +9,21 @@ import { MinioModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AssetsModule } from './assets/assets.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MediaService } from './media/media.service';
 import { AiModule } from './ai/ai.module';
+import { config } from './config';
 
 @Module({
   imports: [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DB_URL,
+      url: config.DB_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
-      logging: process.env.DB_LOGGING === 'true',
+      synchronize: config.NODE_ENV === 'development',
+      logging: config.DB_LOGGING,
     }),
     UsersModule,
     ProjectsModule,
@@ -33,6 +34,6 @@ import { AiModule } from './ai/ai.module';
     AiModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MediaService],
 })
 export class AppModule {}

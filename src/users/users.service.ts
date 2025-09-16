@@ -9,10 +9,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
+import { config } from '../config';
 
 @Injectable()
 export class UsersService {
-  private readonly saltRounds = process.env.BCRYPT_SALT_ROUNDS || 12;
+  private readonly saltRounds = config.BCRYPT_SALT_ROUNDS;
 
   constructor(
     @InjectRepository(User)
