@@ -4,6 +4,7 @@ import * as http from 'http';
 import * as https from 'https';
 import { z } from 'zod';
 
+// Types
 export const DependenciesStatusSchema = z.enum(['ok', 'unreachable']);
 export type DependenciesStatus = z.infer<typeof DependenciesStatusSchema>;
 
