@@ -26,7 +26,7 @@ export class AiController {
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
     // TODO: Add type for body
-    @Body() body: { assetIds: string[] },
+    @Body() body: { imageAssetIds: string[] },
   ) {
     return this.aiService.generateLyrics({
       projectId,
