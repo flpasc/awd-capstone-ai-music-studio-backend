@@ -32,7 +32,6 @@ export class UsersService {
       );
     }
 
-    // HACK: Do we need/want a helper for bcrypt?
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
       this.saltRounds,
@@ -49,8 +48,6 @@ export class UsersService {
     return this.userRepo.find();
   }
 
-  // HACK: Should we have separate methods for getBy: Id and Email?
-  // Find user by ID
   async findOneById(id: string): Promise<User> {
     const user = await this.userRepo.findOneBy({ id });
     if (!user) {
@@ -91,7 +88,6 @@ export class UsersService {
     return await this.findOneById(id);
   }
 
-  // HACK: Should we return something?
   async remove(id: string): Promise<void> {
     const user = await this.findOneById(id);
     await this.userRepo.remove(user);
