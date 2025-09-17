@@ -5,14 +5,13 @@ services:
   backend:
     env_file:
       - .env
-      - ${OPTIONAL_ENV_FILE:-/dev/null}
     build:
       context: .
       dockerfile: Dockerfile
       target: development
     container_name: ai-studio-backend
     ports:
-      - "3001:3001"
+      - '3001:3001'
     depends_on:
       - postgres
       - minio
@@ -24,7 +23,7 @@ services:
     networks:
       - backend-network
     extra_hosts:
-      - "localhost:host-gateway"
+      - 'localhost:host-gateway'
 
   postgres:
     image: postgres:15-alpine
@@ -34,7 +33,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=ai-studio
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # - ./postgresql-init-scripts:/docker-entrypoint-initdb.d
@@ -50,8 +49,8 @@ services:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
     ports:
-      - "9000:9000"  # API
-      - "9001:9001"  # Console
+      - '9000:9000' # API
+      - '9001:9001' # Console
     volumes:
       - minio_data:/data
     networks:
