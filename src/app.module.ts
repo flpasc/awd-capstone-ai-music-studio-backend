@@ -20,9 +20,17 @@ import { config } from './config';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: config.DB_URL,
+      host: config.DB_HOST,
+      port: config.DB_PORT,
+      database: config.DB_NAME,
+      username: config.DB_USER,
+      password: config.DB_PASSWORD,
+      ssl:
+        config.DB_SSL || config.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : false,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: config.NODE_ENV === 'development',
+      synchronize: config.DB_SYNCHRONIZE || config.NODE_ENV === 'development',
       logging: config.DB_LOGGING,
     }),
     UsersModule,

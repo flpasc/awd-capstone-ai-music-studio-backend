@@ -7,7 +7,7 @@ import { config } from '../config';
 export class StorageService {
   private readonly minioClient: Client;
   private readonly minioPresignedUrlClient: Client;
-  private readonly DEFAULT_BUCKET_NAME = 'app-assets';
+  private readonly DEFAULT_BUCKET_NAME = config.S3_BUCKET_NAME;
   private readonly expireTime = config.MINIO_PRESIGNED_URL_EXPIRE_TIME;
 
   // TODO: Proper error handling
@@ -22,7 +22,7 @@ export class StorageService {
     });
 
     this.minioPresignedUrlClient = new Client({
-      endPoint: 'localhost',
+      endPoint: config.MINIO_PRESIGNED_URL_ENDPOINT,
       port: config.MINIO_PORT,
       useSSL: config.MINIO_SSL,
       accessKey: config.MINIO_ACCESSKEY,

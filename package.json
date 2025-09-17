@@ -23,6 +23,7 @@
     "clean:storage": "docker compose down -v",
     "docker:network:create": "docker network create ai-studio-shared-network",
     "docker:network:remove": "docker network rm ai-studio-shared-network",
+    "docker:build:production": "VERSION=$(date +'%Y.%m.%d-%H.%M') docker compose -f docker-compose.production.yml build",
     "modules:update:running": "docker compose stop backend && npm run modules:update:stopped && docker compose up -d backend",
     "modules:update:stopped": "docker compose build backend && docker compose run --rm --no-deps backend npm ci",
     "modules:update": "docker compose ps -q backend | grep -q . && npm run modules:update:running || npm run modules:update:stopped"
