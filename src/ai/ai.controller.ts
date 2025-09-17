@@ -11,12 +11,28 @@ export class AiController {
   generateAudio(
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
+    // TODO: Add type for body
     @Body() body: { prompt: string; lyricsPrompt: string },
   ) {
     return this.aiService.generateAudio({
       projectId,
       userId: user.id,
-      ...body,
+      prompt: body.prompt,
+      lyricsPrompt: body.lyricsPrompt,
+    });
+  }
+
+  @Post('/:id/generate-lyrics')
+  generateLyrics(
+    @Param('id') projectId: string,
+    @CurrentUser() user: SafeUser,
+    // TODO: Add type for body
+    @Body() body: { imageAssetIds: string[] },
+  ) {
+    return this.aiService.generateLyrics({
+      projectId,
+      userId: user.id,
+      imageAssetIds: body.imageAssetIds,
     });
   }
 }

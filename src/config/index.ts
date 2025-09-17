@@ -93,6 +93,22 @@ const configSchema = z
 
     // 3rd Party API Keys (optional)
     FAL_KEY: z.string(),
+    OPENAI_API_KEY: z.string(),
+
+    // Open Ai Config
+    OPENAI_MODEL: z.string(),
+    OPENAI_MAX_TOKENS: z
+      .string()
+      .default('2000')
+      .transform((val) => parseInt(val, 10)),
+    OPENAI_TEMPERATURE: z
+      .string()
+      .default('0.7')
+      .transform((val) => parseFloat(val)),
+    });
+
+    // 3rd Party API Keys (optional)
+    FAL_KEY: z.string(),
   })
   .transform((cfg) => ({
     ...cfg,

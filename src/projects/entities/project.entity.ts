@@ -36,7 +36,7 @@ export class Project {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToMany(() => Asset, (asset) => asset.projects)
+  @ManyToMany(() => Asset, (asset) => asset.projects, { cascade: true })
   @JoinTable({
     name: 'project_assets',
     joinColumn: { name: 'project_id', referencedColumnName: 'id' },

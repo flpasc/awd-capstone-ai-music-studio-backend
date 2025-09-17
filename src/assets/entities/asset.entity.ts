@@ -20,6 +20,7 @@ export type AssetMetadata = z.infer<typeof AssetMetadataSchema>;
 
 export enum AssetFormat {
   AUDIO = 'audio',
+  AI_AUDIO = 'ai_audio',
   VIDEO = 'video',
   IMAGE = 'image',
   OUTPUT = 'output',
