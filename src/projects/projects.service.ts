@@ -143,25 +143,10 @@ export class ProjectsService {
   }
 
   async remove(id: string, userId: string): Promise<Project> {
-    try {
-      const projectToDelete = await this.projectsRepo.findOne({
-        where: { id, userId },
-        relations: ['tasks', 'assets'],
-      });
-
-      if (!projectToDelete) {
-        throw new NotFoundException(`Project with the id: ${id} not found`);
-      }
-
-      return this.projectsRepo.remove(projectToDelete);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Delete project error: ${errorMessage} - ID: ${id}`);
-      throw new InternalServerErrorException('Failed to delete project');
+    const project = await this.projectsRepo.findOne({ where: { id, userId } });
+    if (!project) {
+      throw new NotFoundException(`Project with the id: ${id} not found`);
     }
+    return this.projectsRepo.remove(project);
   }
 }
