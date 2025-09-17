@@ -105,16 +105,13 @@ const configSchema = z
       .string()
       .default('0.7')
       .transform((val) => parseFloat(val)),
-    });
-
-    // 3rd Party API Keys (optional)
-    FAL_KEY: z.string(),
   })
   .transform((cfg) => ({
     ...cfg,
     MINIO_PRESIGNED_URL_ENDPOINT:
       cfg.MINIO_PRESIGNED_URL_ENDPOINT || cfg.MINIO_ENDPOINT,
   }));
+
 // Validate environment variables on module load
 const validateConfig = () => {
   try {
