@@ -35,18 +35,4 @@ export class AiController {
       imageAssetIds: body.imageAssetIds,
     });
   }
-
-  @Post('/:id/generate-lyrics')
-  generateLyrics(
-    @Param('id') projectId: string,
-    @CurrentUser() user: SafeUser,
-    // TODO: Add type for body
-    @Body() body: { imageAssetIds: string[] },
-  ) {
-    return this.aiService.generateLyrics({
-      projectId,
-      userId: user.id,
-      ...body,
-    });
-  }
 }
