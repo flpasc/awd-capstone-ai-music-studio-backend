@@ -253,4 +253,233 @@ export class AiService {
       throw new Error(`Failed to generate lyrics: ${(error as Error).message}`);
     }
   }
+
+  /**
+   * Generate lyrics with timestamps, matching each image's duration.
+   * Returns an array of { text, start, end, imageAssetId }.
+   */
+  async generateLyricsWithTimestamps(args: {
+    projectId: string;
+    userId: string;
+    imageAssetIds: string[];
+    trackLengthSeconds?: number;
+  }) {
+    const ArgsSchema = z.object({
+      projectId: z.string().min(1),
+      userId: z.string().min(1),
+      imageAssetIds: z.array(z.string().min(1)).min(1),
+      trackLengthSeconds: z.number().int().min(30).max(1200).optional(),
+    });
+    const {
+      projectId,
+      userId,
+      imageAssetIds,
+      trackLengthSeconds = 180,
+    } = ArgsSchema.parse(args);
+
+    // Fetch images (validate as in generateLyrics)
+    const assets = await Promise.all(
+      imageAssetIds.map(async (assetId) => {
+        const asset = await this.assetsService.findOne(assetId);
+        if (!asset || asset.format !== AssetFormat.IMAGE) {
+          throw new Error(`Asset ${assetId} not found or is not an image`);
+        }
+        const imageUrl = await this.storageService.getDownloadPresignedUrl(
+          userId,
+          projectId,
+          asset.storageName,
+        );
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(
+            `Failed to fetch image ${assetId}: ${imageResponse.statusText}`,
+          );
+        }
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const base64Image = Buffer.from(imageBuffer).toString('base64');
+        const mimeType = asset.metadata?.mimetype || 'image/jpeg';
+        return `data:${mimeType};base64,${base64Image}`;
+      }),
+    );
+
+    // Calculate duration per image
+    const secondsPerImage = Math.round(
+      trackLengthSeconds / imageAssetIds.length,
+    );
+
+    // Prompt for lyrics (requesting timestamps in seconds, one line per lyric)
+    const prompt = [
+      `You will be given ${imageAssetIds.length} images in order. Generate song lyrics for a ${trackLengthSeconds}-second track.`,
+      '',
+      'STRICT INSTRUCTIONS:',
+      '- Limit output to 600 characters.',
+      '- Return ONLY a JSON array of objects: [{ "text": "...", "start": 0 }].',
+      `- The lyrics must cover the entire track duration, from 0 to ${trackLengthSeconds} seconds.`,
+      `- Divide the song into sections, one per image, in the order provided. Each section should be inspired by its image and cover an equal portion of the total duration (about ${Math.floor(trackLengthSeconds / imageAssetIds.length)} seconds per image).`,
+      '- Each lyric line should have a realistic start timestamp (in seconds), and the last line should be near the end of the track.',
+      '- The number of lyric lines should be enough to fill the whole track, not just a few lines.',
+      '- Each object should have text (a single lyric line), and start (the timestamp in seconds when the line should begin, using realistic musical phrasing, not just equal division).',
+      '- The first line should start at 0. Each subsequent line should have a start time that reflects natural song pacing (e.g., 2-5 seconds apart, depending on the lyric).',
+      '- Use proper song structure, but each object should be a single line.',
+      '- Each lyric line should match the image order.',
+      '',
+      'Example:',
+      '[{"text": "Tell me that I\'m special", "start": 4.074}, {"text": "Tell me I look pretty", "start": 6.226}]',
+      '',
+      'RETURN ONLY THE JSON ARRAY. NOTHING ELSE.',
+    ].join('\n');
+
+    const content = [
+      { type: 'text', text: prompt },
+      ...assets.map((imageData) => ({
+        type: 'image_url',
+        image_url: { url: imageData, detail: 'high' },
+      })),
+    ];
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.openApiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.openApiModel,
+        messages: [
+          {
+            role: 'user',
+            content,
+          },
+        ],
+        max_tokens: this.openApiMaxToken,
+        temperature: this.openApiTemperature,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `OpenAI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{
+        message?: {
+          content?: string;
+        };
+      }>;
+    };
+    let lyricsArr: Array<{ text: string; start: number; end: number }> = [];
+    try {
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) throw new Error('No lyrics generated');
+      // Remove code blocks if present
+      const jsonStr = content
+        .replace(/```[a-zA-Z]*\n?/g, '')
+        .replace(/```/g, '')
+        .trim();
+      lyricsArr = JSON.parse(jsonStr);
+    } catch (e) {
+      throw new Error(
+        'Failed to parse lyrics with timestamps: ' + (e as Error).message,
+      );
+    }
+
+    // Format as string: [mm:ss.SSS]Lyric line\n
+    function formatTimestamp(sec: number): string {
+      const minutes = Math.floor(sec / 60);
+      const seconds = Math.floor(sec % 60);
+      const ms = Math.round((sec - Math.floor(sec)) * 1000);
+      return `[${minutes.toString().padStart(2, '0')}:${seconds
+        .toString()
+        .padStart(2, '0')}.${ms.toString().padStart(3, '0')}]`;
+    }
+
+    const lyricsWithTimestampsStr = lyricsArr
+      .map((item) => {
+        const text = (item.text || '').trim();
+        if (!text) return '';
+        const ts = formatTimestamp(Number(item.start ?? 0));
+        return `${ts} ${text}`;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      lyricsWithTimestamps: lyricsWithTimestampsStr,
+      duration: trackLengthSeconds,
+      imageCount: imageAssetIds.length,
+      timePerImage: secondsPerImage,
+    };
+  }
+
+  async generateAudioFromLyricsWithDiffRhythm(args: {
+    projectId: string;
+    userId: string;
+    lyricsWithTimestamps: string; // Already formatted string
+    stylePrompt: string; // required for diffrhythm
+  }) {
+    const { projectId, userId, lyricsWithTimestamps, stylePrompt } = args;
+
+    // Call FAL AI with diffrhythm model, passing the formatted string and style prompt
+    const result = await fal.subscribe('fal-ai/diffrhythm', {
+      input: {
+        lyrics: lyricsWithTimestamps,
+        style_prompt: stylePrompt,
+      },
+      logs: true,
+      onQueueUpdate: (update) => {
+        if (update.status === 'IN_PROGRESS') {
+          update.logs.map((log) => log.message).forEach(console.log);
+        }
+      },
+    });
+
+    const audioSchema = z.object({
+      audio: z.object({
+        url: z.string(),
+        file_name: z.string(),
+        file_size: z.number(),
+        content_type: z.string(),
+      }),
+    });
+    const parsedData = audioSchema.parse(result.data);
+    const audioResponse = await fetch(parsedData.audio.url);
+    if (!audioResponse.ok) {
+      throw new Error(
+        `Failed to fetch generated audio file: ${audioResponse.statusText}`,
+      );
+    }
+    const filename = `${new Date().getTime()}-${parsedData.audio.file_name}`;
+    const audioBuffer = await audioResponse.arrayBuffer();
+    await this.storageService.uploadFile(
+      userId,
+      projectId,
+      filename,
+      Buffer.from(audioBuffer),
+    );
+
+    const asset = await this.assetsService.create({
+      userId: userId,
+      projectId,
+      originalName: parsedData.audio.file_name,
+      storageName: filename,
+      metadata: {
+        size: parsedData.audio.file_size,
+        mimetype: parsedData.audio.content_type,
+      },
+      format: AssetFormat.AI_AUDIO,
+    });
+
+    const url = await this.storageService.getDownloadPresignedUrl(
+      userId,
+      projectId,
+      filename,
+    );
+
+    return {
+      ...asset,
+      downloadUrl: url,
+    };
+  }
 }
