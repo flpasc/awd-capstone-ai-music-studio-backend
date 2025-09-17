@@ -1,29 +1,23 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# AI Music Studio Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+AI Music Studio Backend is a **NestJS** service providing REST APIs for users, projects, and media assets.  
+It uses **PostgreSQL (TypeORM)** for persistence and **S3 (MinIO / Google Cloud Storage)** for object storage.  
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built as a Capstone project for the **Advanced Web Development Bootcamp** by [neue fische GmbH](https://www.neuefische.de/) (aka [Spiced Academy](https://www.spiced-academy.com/)).
 
-## Description
+## Key Features
+- JWT-based user authentication (planned)  
+- Project and media asset upload, listing, and download  
+- AI-powered image analysis and music generation  
+- Video rendering and processing  
+- Notifications and webhooks for process tracking  
+- YouTube integration (planned)  
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## AI Usage
+Users can create video slideshows by combining uploaded images with AI-generated audio.  
+- Image descriptions are generated with **OpenAI Vision API**.  
+- Descriptions are used by music generation models (**MiniMax, DyffRythm**) to create matching audio tracks.  
+- Final videos (images + audio) are rendered as **MP4 files** for download or YouTube upload.  
 
 ## Project setup
 
@@ -69,6 +63,38 @@ $ mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## Build Docker images and upload to Dockerhub
+
+To deploy your NestJS application with Docker, you can use the provided `docker-compose.production.yml` file. This file contains the necessary configuration to run your application in a production environment.
+
+1. Setup environment variables in a `.env` file in the `backend` directory for dockerhub.
+
+```env
+# .env
+DOCKER_REGISTRY_USERNAME=your_dockerhub_username
+DOCKER_IMAGE_NAME=your_dockerhub_image_name
+```
+
+2. Setup other environment variables in the `.env.production.local` file as needed for your application (e.g., database connection details, API keys, etc.).
+
+3. Build the Docker images:
+
+```bash
+$ docker-compose -f docker-compose.production.yml build
+```
+
+4. Test the Docker containers locally:
+
+```bash
+$ docker-compose -f docker-compose.production.yml up -d
+```
+
+5. Push the Docker images to Dockerhub:
+
+```bash
+$ docker-compose -f docker-compose.production.yml push
+```
 
 ## Resources
 
