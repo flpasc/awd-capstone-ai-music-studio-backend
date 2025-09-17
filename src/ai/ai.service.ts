@@ -1,10 +1,10 @@
 import { fal } from '@fal-ai/client';
 import { Injectable } from '@nestjs/common';
+import { Buffer } from 'buffer';
 import { AssetsService } from 'src/assets/assets.service';
 import { AssetFormat } from 'src/assets/entities/asset.entity';
 import { config } from 'src/config';
 import { StorageService } from 'src/storage/storage.service';
-import { Buffer } from 'buffer';
 import { z } from 'zod';
 
 @Injectable()
