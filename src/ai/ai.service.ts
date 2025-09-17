@@ -17,7 +17,7 @@ export class AiService {
   constructor(
     private readonly storageService: StorageService,
     private readonly assetsService: AssetsService,
-  ) { }
+  ) {}
   async generateAudio(args: {
     projectId: string;
     prompt: string;
@@ -71,7 +71,7 @@ export class AiService {
         size: parsedData.audio.file_size,
         mimetype: parsedData.audio.content_type,
       },
-      format: AssetFormat.AUDIO,
+      format: AssetFormat.AI_AUDIO,
     });
 
     const url = await this.storageService.getDownloadPresignedUrl(

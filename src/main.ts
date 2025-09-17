@@ -4,7 +4,7 @@ import { config } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Enable CORS with specific settings for SSE
   app.enableCors({
     origin: config.CORS_ORIGIN,
