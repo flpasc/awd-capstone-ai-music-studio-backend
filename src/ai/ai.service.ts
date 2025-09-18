@@ -419,7 +419,7 @@ export class AiService {
     };
   }
 
-  async generateAudioFromLyricsWithDiffRhythm(args: {
+  async generateAudioDiffrhythm(args: {
     projectId: string;
     userId: string;
     lyricsWithTimestamps: string;

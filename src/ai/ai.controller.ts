@@ -55,7 +55,7 @@ export class AiController {
     @CurrentUser() user: SafeUser,
     @Body() body: { lyricsWithTimestamps: string; stylePrompt: string },
   ) {
-    return this.aiService.generateAudioFromLyricsWithDiffRhythm({
+    return this.aiService.generateAudioDiffrhythm({
       projectId,
       userId: user.id,
       lyricsWithTimestamps: body.lyricsWithTimestamps,
