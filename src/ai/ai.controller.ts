@@ -40,7 +40,7 @@ export class AiController {
   generateTimestampLyrics(
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
-    @Body() body: { imageAssetIds: string[]; trackLengthSeconds?: number },
+    @Body() body: { imageAssetIds: string[] },
   ) {
     return this.aiService.generateLyricsWithTimestamps({
       projectId,

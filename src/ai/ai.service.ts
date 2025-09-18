@@ -7,6 +7,31 @@ import { config } from 'src/config';
 import { StorageService } from 'src/storage/storage.service';
 import { z } from 'zod';
 
+export const AudioSchema = z.object({
+  audio: z.object({
+    url: z.string(),
+    file_name: z.string(),
+    file_size: z.number(),
+    content_type: z.string(),
+  }),
+});
+
+export const LyricsSchema = z.array(
+  z.object({
+    text: z.string(),
+    start: z.number(),
+    end: z.number(),
+  }),
+);
+type LyricsType = z.infer<typeof LyricsSchema>;
+
+export const ArgsSchema = z.object({
+  projectId: z.string().min(1),
+  userId: z.string().min(1),
+  imageAssetIds: z.array(z.string().min(1)).min(1),
+  trackLengthSeconds: z.number().int().min(30).max(1200).optional(),
+});
+
 @Injectable()
 export class AiService {
   private readonly openApiKey = config.OPENAI_API_KEY;
@@ -38,15 +63,8 @@ export class AiService {
         }
       },
     });
-    const audioSchema = z.object({
-      audio: z.object({
-        url: z.string(),
-        file_name: z.string(),
-        file_size: z.number(),
-        content_type: z.string(),
-      }),
-    });
-    const parsedData = audioSchema.parse(result.data);
+
+    const parsedData = AudioSchema.parse(result.data);
     const audioResponse = await fetch(parsedData.audio.url);
     if (!audioResponse.ok) {
       throw new Error(
@@ -86,20 +104,12 @@ export class AiService {
     };
   }
 
-  // TODO: Add type for body
   async generateLyrics(args: {
     projectId: string;
     userId: string;
     imageAssetIds: string[];
     trackLengthSeconds?: number;
   }) {
-    // TODO: Add types folder
-    const ArgsSchema = z.object({
-      projectId: z.string().min(1),
-      userId: z.string().min(1),
-      imageAssetIds: z.array(z.string().min(1)).min(1),
-      trackLengthSeconds: z.number().int().min(30).max(1200).optional(),
-    });
     const {
       projectId,
       userId,
@@ -264,12 +274,6 @@ export class AiService {
     imageAssetIds: string[];
     trackLengthSeconds?: number;
   }) {
-    const ArgsSchema = z.object({
-      projectId: z.string().min(1),
-      userId: z.string().min(1),
-      imageAssetIds: z.array(z.string().min(1)).min(1),
-      trackLengthSeconds: z.number().int().min(30).max(1200).optional(),
-    });
     const {
       projectId,
       userId,
@@ -315,6 +319,7 @@ export class AiService {
       '- Limit output to 600 characters.',
       '- Return ONLY a JSON array of objects: [{ "text": "...", "start": 0 }].',
       `- The lyrics must cover the entire track duration, from 0 to ${trackLengthSeconds} seconds.`,
+      '- Add a 5-10 seconds long intro with no lyrics at the start and end of the song',
       `- Divide the song into sections, one per image, in the order provided. Each section should be inspired by its image and cover an equal portion of the total duration (about ${Math.floor(trackLengthSeconds / imageAssetIds.length)} seconds per image).`,
       '- Each lyric line should have a realistic start timestamp (in seconds), and the last line should be near the end of the track.',
       '- The number of lyric lines should be enough to fill the whole track, not just a few lines.',
@@ -369,16 +374,17 @@ export class AiService {
         };
       }>;
     };
-    let lyricsArr: Array<{ text: string; start: number; end: number }> = [];
+    let lyricsArr: LyricsType = [];
     try {
       const content = data.choices?.[0]?.message?.content?.trim();
-      if (!content) throw new Error('No lyrics generated');
+      if (typeof content != 'string' || !content)
+        throw new Error('No lyrics generated');
       // Remove code blocks if present
       const jsonStr = content
         .replace(/```[a-zA-Z]*\n?/g, '')
         .replace(/```/g, '')
         .trim();
-      lyricsArr = JSON.parse(jsonStr);
+      lyricsArr = JSON.parse(jsonStr) as LyricsType;
     } catch (e) {
       throw new Error(
         'Failed to parse lyrics with timestamps: ' + (e as Error).message,
@@ -416,8 +422,8 @@ export class AiService {
   async generateAudioFromLyricsWithDiffRhythm(args: {
     projectId: string;
     userId: string;
-    lyricsWithTimestamps: string; // Already formatted string
-    stylePrompt: string; // required for diffrhythm
+    lyricsWithTimestamps: string;
+    stylePrompt: string;
   }) {
     const { projectId, userId, lyricsWithTimestamps, stylePrompt } = args;
 
@@ -426,6 +432,8 @@ export class AiService {
       input: {
         lyrics: lyricsWithTimestamps,
         style_prompt: stylePrompt,
+        scheduler: 'rk4',
+        cfg_strength: 8,
       },
       logs: true,
       onQueueUpdate: (update) => {
@@ -435,15 +443,7 @@ export class AiService {
       },
     });
 
-    const audioSchema = z.object({
-      audio: z.object({
-        url: z.string(),
-        file_name: z.string(),
-        file_size: z.number(),
-        content_type: z.string(),
-      }),
-    });
-    const parsedData = audioSchema.parse(result.data);
+    const parsedData = AudioSchema.parse(result.data);
     const audioResponse = await fetch(parsedData.audio.url);
     if (!audioResponse.ok) {
       throw new Error(
