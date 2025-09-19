@@ -35,4 +35,31 @@ export class AiController {
       imageAssetIds: body.imageAssetIds,
     });
   }
+
+  @Post('/:id/generate-lyrics-timestamp')
+  generateTimestampLyrics(
+    @Param('id') projectId: string,
+    @CurrentUser() user: SafeUser,
+    @Body() body: { imageAssetIds: string[] },
+  ) {
+    return this.aiService.generateLyricsWithTimestamps({
+      projectId,
+      userId: user.id,
+      imageAssetIds: body.imageAssetIds,
+    });
+  }
+
+  @Post('/:id/generate-audio-timestamp')
+  generateTimestampAudio(
+    @Param('id') projectId: string,
+    @CurrentUser() user: SafeUser,
+    @Body() body: { lyricsWithTimestamps: string; stylePrompt: string },
+  ) {
+    return this.aiService.generateAudioDiffrhythm({
+      projectId,
+      userId: user.id,
+      lyricsWithTimestamps: body.lyricsWithTimestamps,
+      stylePrompt: body.stylePrompt,
+    });
+  }
 }
