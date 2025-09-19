@@ -25,7 +25,6 @@ export class AiService {
     userId: string;
   }) {
     const { projectId, prompt, lyricsPrompt, userId } = args;
-
     const result = await fal.subscribe('fal-ai/minimax-music/v1.5', {
       input: {
         prompt: prompt,
