@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 import { In, Repository } from 'typeorm';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { Asset } from './entities/asset.entity';
+import { Asset, AssetMetadata } from './entities/asset.entity';
 import { UpdateAssetDto } from './dto/update-asset.dto';
+import { MediaService } from 'src/media/media.service';
 
 @Injectable()
 export class AssetsService {
@@ -14,6 +15,8 @@ export class AssetsService {
 
     @InjectRepository(Project)
     private readonly projectsRepo: Repository<Project>,
+
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(createAssetDto: CreateAssetDto): Promise<Asset> {
@@ -62,5 +65,27 @@ export class AssetsService {
 
   async findAllByIds(ids: string[]): Promise<Asset[]> {
     return this.assetsRepo.find({ where: { id: In(ids) } });
+  }
+
+  async fillMetadataFromBuffer(
+    metadata: AssetMetadata,
+    arrayBuffer: ArrayBuffer | Buffer,
+  ): Promise<AssetMetadata> {
+    try {
+      // Analyze media file
+      const mediaInfo =
+        await this.mediaService.getBasicMediaInfoFromBuffer(arrayBuffer);
+
+      // Update metadata with media analysis results
+      metadata = {
+        ...metadata,
+        fileType: mediaInfo.fileType ?? 'unknown',
+        duration: mediaInfo.duration > 0 ? mediaInfo.duration : undefined,
+      };
+    } catch (error) {
+      console.error('Error analyzing media file:', error);
+      // metadata is already set with fallback values
+    }
+    return metadata;
   }
 }

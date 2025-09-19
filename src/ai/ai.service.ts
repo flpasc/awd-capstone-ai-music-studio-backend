@@ -2,7 +2,7 @@ import { fal } from '@fal-ai/client';
 import { Injectable } from '@nestjs/common';
 import { Buffer } from 'buffer';
 import { AssetsService } from 'src/assets/assets.service';
-import { AssetFormat } from 'src/assets/entities/asset.entity';
+import { AssetFormat, AssetMetadata } from 'src/assets/entities/asset.entity';
 import { config } from 'src/config';
 import { StorageService } from 'src/storage/storage.service';
 import { z } from 'zod';
@@ -25,7 +25,7 @@ export class AiService {
     userId: string;
   }) {
     const { projectId, prompt, lyricsPrompt, userId } = args;
-    console.log(prompt, lyricsPrompt);
+
     const result = await fal.subscribe('fal-ai/minimax-music/v1.5', {
       input: {
         prompt: prompt,
@@ -62,15 +62,25 @@ export class AiService {
       Buffer.from(audioBuffer),
     );
 
+    // Prepare base metadata with proper typing
+    let metadata: AssetMetadata = {
+      size: parsedData.audio.file_size,
+      mimetype: parsedData.audio.content_type,
+      fileType: 'audio',
+      duration: undefined,
+    };
+
+    metadata = await this.assetsService.fillMetadataFromBuffer(
+      metadata,
+      audioBuffer,
+    );
+
     const asset = await this.assetsService.create({
       userId: userId,
       projectId,
       originalName: parsedData.audio.file_name,
       storageName: filename,
-      metadata: {
-        size: parsedData.audio.file_size,
-        mimetype: parsedData.audio.content_type,
-      },
+      metadata,
       format: AssetFormat.AI_AUDIO,
     });
 

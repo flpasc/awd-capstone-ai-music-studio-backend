@@ -280,7 +280,7 @@ export class MediaService {
   }
 
   async getBasicMediaInfoFromBuffer(
-    fileBuffer: Buffer<ArrayBufferLike>,
+    fileBuffer: Buffer | ArrayBuffer,
   ): Promise<BasicMediaInfo> {
     // Create temporary file for analysis
     const filename = `temp_${Date.now()}.tmp`;
@@ -289,7 +289,12 @@ export class MediaService {
     const tempFilePath = path.join(tempDir, filename);
 
     // Write buffer to temporary file
-    await fs.writeFile(tempFilePath, fileBuffer);
+    // Normalize input to a Node.js Buffer so writeFile behaves consistently
+    const dataToWrite = Buffer.isBuffer(fileBuffer)
+      ? fileBuffer
+      : Buffer.from(new Uint8Array(fileBuffer));
+
+    await fs.writeFile(tempFilePath, dataToWrite);
 
     // Analyze media file
     const mediaInfo = await this.getBasicMediaInfo(tempFilePath);
