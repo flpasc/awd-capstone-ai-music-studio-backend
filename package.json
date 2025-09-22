@@ -23,7 +23,9 @@
     "clean:storage": "docker compose down -v",
     "docker:network:create": "docker network create ai-studio-shared-network",
     "docker:network:remove": "docker network rm ai-studio-shared-network",
-    "docker:build:production": "VERSION=$(date +'%Y.%m.%d-%H.%M') docker compose -f docker-compose.production.yml build",
+    "docker:build:production": "export VERSION=$(date +'%Y.%m.%d-%H.%M'); docker compose -f docker-compose.production.yml build && echo \"BACKEND_IMAGE_TAG=$VERSION\" >> .env.images.local",
+    "docker:build": "npm run docker:build:production",
+    "docker:push": ". ./.env; IMAGE_REF=\"${DOCKER_REGISTRY_USERNAME}/${DOCKER_IMAGE_NAME}:latest\"; IMAGE_ID=$(docker image inspect --format '{{.Id}}' \"$IMAGE_REF\" 2>/dev/null) || { echo \"Image $IMAGE_REF not found\"; exit 1; }; docker image inspect --format '{{range .RepoTags}}{{println .}}{{end}}' \"$IMAGE_ID\" | grep -v '^<none>$' | xargs -r -I {} docker push {}",
     "modules:update:running": "docker compose stop backend && npm run modules:update:stopped && docker compose up -d backend",
     "modules:update:stopped": "docker compose build backend && docker compose run --rm --no-deps backend npm ci",
     "modules:update": "docker compose ps -q backend | grep -q . && npm run modules:update:running || npm run modules:update:stopped"

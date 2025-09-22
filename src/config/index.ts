@@ -25,6 +25,10 @@ const configSchema = z
       .string()
       .optional()
       .transform((val) => val === 'true'),
+    DB_SSL_REJECT_UNAUTHORIZED: z
+      .string()
+      .default('false')
+      .transform((val) => val === 'true'),
     DB_SYNCHRONIZE: z
       .string()
       .optional()
@@ -89,7 +93,22 @@ const configSchema = z
     VIDEO_WORKER_URL: z.url(),
 
     // CORS (frontend URL)
-    CORS_ORIGIN: z.string(),
+    CORS_ORIGIN: z.string().transform((val) => {
+      // Can JSON parse?
+      try {
+        const parsed: unknown = JSON.parse(val);
+        if (z.array(z.string()).parse(parsed)) {
+          return parsed;
+        } else {
+          return [val];
+        }
+      } catch {
+        console.warn(
+          'CORS_ORIGIN is not a valid JSON array, using as a single origin string',
+        );
+        return [val];
+      }
+    }),
 
     // 3rd Party API Keys (optional)
     FAL_KEY: z.string(),
