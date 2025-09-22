@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/projects/entities/project.entity';
 import { In, Repository } from 'typeorm';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { Asset } from './entities/asset.entity';
+import { Asset, AssetFormat } from './entities/asset.entity';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 
 @Injectable()
@@ -47,8 +47,13 @@ export class AssetsService {
     return `This action returns all assets`;
   }
 
-  async findOne(id: string): Promise<Asset | null> {
-    return this.assetsRepo.findOneBy({ id });
+  async findOne(id: string, type?: AssetFormat): Promise<Asset | null> {
+    return this.assetsRepo.findOne({
+      where: {
+        id,
+        ...(type && { format: type }),
+      },
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

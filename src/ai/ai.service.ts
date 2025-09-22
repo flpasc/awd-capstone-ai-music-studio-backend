@@ -3,6 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { Buffer } from 'buffer';
 import { AssetsService } from 'src/assets/assets.service';
 import { AssetFormat } from 'src/assets/entities/asset.entity';
+import {
+  formatTimestamp,
+  stripCodeBlocks,
+  cleanLyricsResponse,
+} from 'src/common/utils/text-format';
 import { config } from 'src/config';
 import { StorageService } from 'src/storage/storage.service';
 import { z } from 'zod';
@@ -227,30 +232,8 @@ export class AiService {
         throw new Error('No lyrics generated from OpenAI');
       }
 
-      // Clean up the response - remove markdown/code blocks, stray formatting, and JSON if present
-      let cleanedLyrics = lyricsContent.trim();
-      cleanedLyrics = cleanedLyrics
-        .replace(/```[a-zA-Z]*\n?/g, '')
-        .replace(/```/g, '');
-      if (cleanedLyrics.startsWith('{') && cleanedLyrics.endsWith('}')) {
-        try {
-          const parsed = JSON.parse(cleanedLyrics) as {
-            lyrics?: Array<{ text?: string }>;
-          };
-          if (
-            parsed &&
-            Array.isArray(parsed.lyrics) &&
-            parsed.lyrics.every((item) => typeof item.text === 'string')
-          ) {
-            cleanedLyrics = parsed.lyrics
-              .map((item) => item.text as string)
-              .join('\n');
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      cleanedLyrics = cleanedLyrics.replace(/^['"`]+|['"`]+$/g, '').trim();
+      // Clean up the response using utility
+      const cleanedLyrics = cleanLyricsResponse(lyricsContent);
 
       return {
         lyrics: cleanedLyrics,
@@ -284,8 +267,11 @@ export class AiService {
     // Fetch images (validate as in generateLyrics)
     const assets = await Promise.all(
       imageAssetIds.map(async (assetId) => {
-        const asset = await this.assetsService.findOne(assetId);
-        if (!asset || asset.format !== AssetFormat.IMAGE) {
+        const asset = await this.assetsService.findOne(
+          assetId,
+          AssetFormat.IMAGE,
+        );
+        if (!asset) {
           throw new Error(`Asset ${assetId} not found or is not an image`);
         }
         const imageUrl = await this.storageService.getDownloadPresignedUrl(
@@ -379,26 +365,13 @@ export class AiService {
       const content = data.choices?.[0]?.message?.content?.trim();
       if (typeof content != 'string' || !content)
         throw new Error('No lyrics generated');
-      // Remove code blocks if present
-      const jsonStr = content
-        .replace(/```[a-zA-Z]*\n?/g, '')
-        .replace(/```/g, '')
-        .trim();
+      // Remove code blocks using utility
+      const jsonStr = stripCodeBlocks(content);
       lyricsArr = JSON.parse(jsonStr) as LyricsType;
     } catch (e) {
       throw new Error(
         'Failed to parse lyrics with timestamps: ' + (e as Error).message,
       );
-    }
-
-    // Format as string: [mm:ss.SSS]Lyric line\n
-    function formatTimestamp(sec: number): string {
-      const minutes = Math.floor(sec / 60);
-      const seconds = Math.floor(sec % 60);
-      const ms = Math.round((sec - Math.floor(sec)) * 1000);
-      return `[${minutes.toString().padStart(2, '0')}:${seconds
-        .toString()
-        .padStart(2, '0')}.${ms.toString().padStart(3, '0')}]`;
     }
 
     const lyricsWithTimestampsStr = lyricsArr
