@@ -394,7 +394,7 @@ export class AiService {
       .join('\n');
 
     return {
-      lyricsWithTimestamps: lyricsWithTimestampsStr,
+      lyrics: lyricsWithTimestampsStr,
       duration: trackLengthSeconds,
       imageCount: imageAssetIds.length,
       timePerImage: secondsPerImage,
@@ -404,15 +404,16 @@ export class AiService {
   async generateAudioDiffrhythm(args: {
     projectId: string;
     userId: string;
-    lyricsWithTimestamps: string;
+    lyrics: string;
     stylePrompt: string;
   }) {
-    const { projectId, userId, lyricsWithTimestamps, stylePrompt } = args;
+    const { projectId, userId, lyrics, stylePrompt } = args;
+    console.log('WHERE AM I??');
 
     // Call FAL AI with diffrhythm model, passing the formatted string and style prompt
     const result = await fal.subscribe('fal-ai/diffrhythm', {
       input: {
-        lyrics: lyricsWithTimestamps,
+        lyrics: lyrics,
         style_prompt: stylePrompt,
         scheduler: 'rk4',
         cfg_strength: 8,
@@ -439,6 +440,18 @@ export class AiService {
       projectId,
       filename,
       Buffer.from(audioBuffer),
+    ); // Prepare base metadata with proper typing
+
+    let metadata: AssetMetadata = {
+      size: parsedData.audio.file_size,
+      mimetype: parsedData.audio.content_type,
+      fileType: 'audio',
+      duration: undefined,
+    };
+
+    metadata = await this.assetsService.fillMetadataFromBuffer(
+      metadata,
+      audioBuffer,
     );
 
     const asset = await this.assetsService.create({
@@ -446,10 +459,7 @@ export class AiService {
       projectId,
       originalName: parsedData.audio.file_name,
       storageName: filename,
-      metadata: {
-        size: parsedData.audio.file_size,
-        mimetype: parsedData.audio.content_type,
-      },
+      metadata,
       format: AssetFormat.AI_AUDIO,
     });
 
