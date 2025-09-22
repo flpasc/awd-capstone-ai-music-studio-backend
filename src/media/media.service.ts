@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
+import os from 'os';
 import { z } from 'zod';
 
 // Zod schemas for FFprobe output validation
@@ -282,10 +283,10 @@ export class MediaService {
   async getBasicMediaInfoFromBuffer(
     fileBuffer: Buffer | ArrayBuffer,
   ): Promise<BasicMediaInfo> {
-    // Create temporary file for analysis
+    // Create temporary directory safely inside os.tmpdir()
+    const prefix = path.join(os.tmpdir(), 'app-media-');
+    const tempDir = await fs.mkdtemp(prefix); // creates unique dir, e.g. /tmp/app-media-XXXX
     const filename = `temp_${Date.now()}.tmp`;
-    const tempDir = path.join(process.cwd(), 'temp');
-    await fs.mkdir(tempDir, { recursive: true });
     const tempFilePath = path.join(tempDir, filename);
 
     // Write buffer to temporary file

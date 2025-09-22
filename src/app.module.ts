@@ -25,10 +25,9 @@ import { config } from './config';
       database: config.DB_NAME,
       username: config.DB_USER,
       password: config.DB_PASSWORD,
-      ssl:
-        config.DB_SSL || config.NODE_ENV === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+      ssl: config.DB_SSL
+        ? { rejectUnauthorized: config.DB_SSL_REJECT_UNAUTHORIZED }
+        : false,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: config.DB_SYNCHRONIZE || config.NODE_ENV === 'development',
       logging: config.DB_LOGGING,
