@@ -76,7 +76,7 @@ export class AssetsController {
       );
 
       // Get basic file format
-      const fileFormat = getAssetFormat(filename);
+      const format = getAssetFormat(filename);
 
       // Prepare base metadata with proper typing
       let metadata: AssetMetadata = {
@@ -86,27 +86,12 @@ export class AssetsController {
         duration: undefined,
       };
 
-      // For media files (audio/video), analyze with MediaService
-      if (
-        fileFormat === AssetFormat.AUDIO ||
-        fileFormat === AssetFormat.VIDEO
-      ) {
-        try {
-          // Analyze media file
-          const mediaInfo = await this.mediaService.getBasicMediaInfoFromBuffer(
-            file.buffer,
-          );
-
-          // Update metadata with media analysis results
-          metadata = {
-            ...metadata,
-            fileType: mediaInfo.fileType ?? 'unknown',
-            duration: mediaInfo.duration > 0 ? mediaInfo.duration : undefined,
-          };
-        } catch (error) {
-          console.error('Error analyzing media file:', error);
-          // metadata is already set with fallback values
-        }
+      // Enrich metadata with media info (duration, etc.)
+      if (format === AssetFormat.AUDIO || format === AssetFormat.VIDEO) {
+        metadata = await this.assetsService.fillMetadataFromBuffer(
+          metadata,
+          file.buffer,
+        );
       }
 
       // Create asset record
@@ -116,7 +101,7 @@ export class AssetsController {
         originalName: file.originalname,
         storageName: filename,
         metadata,
-        format: fileFormat,
+        format,
       });
 
       uploadResults.push({

@@ -11,6 +11,7 @@ import { Asset } from 'src/assets/entities/asset.entity';
 import { AuthService } from 'src/auth/auth.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { Notification } from 'src/notifications/notification.entity';
+import { MediaService } from 'src/media/media.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Project, Task, Asset, Notification])],
@@ -22,6 +23,7 @@ import { Notification } from 'src/notifications/notification.entity';
     AssetsService,
     AuthService,
     NotificationsService,
+    MediaService,
   ],
   exports: [ProjectsService],
 })

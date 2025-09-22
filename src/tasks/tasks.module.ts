@@ -10,6 +10,7 @@ import { AssetsService } from 'src/assets/assets.service';
 import { Asset } from 'src/assets/entities/asset.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { ProjectsModule } from 'src/projects/projects.module';
+import { MediaService } from 'src/media/media.service';
 
 @Module({
   imports: [
@@ -18,7 +19,13 @@ import { ProjectsModule } from 'src/projects/projects.module';
     ProjectsModule,
   ],
   controllers: [TasksController],
-  providers: [TasksService, AuthService, StorageService, AssetsService],
+  providers: [
+    TasksService,
+    AuthService,
+    StorageService,
+    AssetsService,
+    MediaService,
+  ],
   exports: [TasksService],
 })
 export class TasksModule {}
