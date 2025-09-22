@@ -408,7 +408,6 @@ export class AiService {
     stylePrompt: string;
   }) {
     const { projectId, userId, lyrics, stylePrompt } = args;
-    console.log('WHERE AM I??');
 
     // Call FAL AI with diffrhythm model, passing the formatted string and style prompt
     const result = await fal.subscribe('fal-ai/diffrhythm', {
