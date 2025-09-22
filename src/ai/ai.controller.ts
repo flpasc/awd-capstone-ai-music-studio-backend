@@ -53,13 +53,13 @@ export class AiController {
   generateTimestampAudio(
     @Param('id') projectId: string,
     @CurrentUser() user: SafeUser,
-    @Body() body: { lyricsWithTimestamps: string; stylePrompt: string },
+    @Body() body: { lyricsPrompt: string; prompt: string },
   ) {
     return this.aiService.generateAudioDiffrhythm({
       projectId,
       userId: user.id,
-      lyricsWithTimestamps: body.lyricsWithTimestamps,
-      stylePrompt: body.stylePrompt,
+      lyrics: body.prompt,
+      stylePrompt: body.lyricsPrompt,
     });
   }
 }
